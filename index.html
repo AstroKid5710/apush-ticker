@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APUSH LIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 36px;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .ticker-wrap {
+    width: 100%;
+    height: 36px;
+    background: #171a17;
+    border-bottom: 2px solid #2a4a2a;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-badge {
+    flex-shrink: 0;
+    background: #4bad6c;
+    color: #0e110e;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0 11px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    z-index: 2;
+  }
+
+  .ticker-wrap::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 48px;
+    background: linear-gradient(to left, #171a17, transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .ticker-track {
+    overflow: hidden;
+    flex: 1;
+    height: 100%;
+    position: relative;
+  }
+
+  .ticker-tape {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+    white-space: nowrap;
+    will-change: transform;
+  }
+  .ticker-tape.running {
+    animation: scroll linear infinite;
+  }
+  .ticker-tape:hover { animation-play-state: paused; }
+
+  @keyframes scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .t-sep {
+    color: #1e3a1e;
+    font-size: 13px;
+    padding: 0 16px;
+    font-family: 'Roboto Mono', monospace;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .t-pill {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    border: 1px solid currentColor;
+    padding: 1px 5px;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .t-pill.g { color: #4bad6c; border-color: #2a5c2a; }
+  .t-pill.w { color: #e07b30; border-color: #6a3810; }
+  .t-pill.r { color: #d94040; border-color: #6a1818; }
+
+  .t-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  .t-text.g    { color: #4bad6c; }
+  .t-text.w    { color: #e07b30; }
+  .t-text.r    { color: #d94040; }
+  .t-text.dim  { color: #2e4a2e; }
+  .t-text.muted { color: #2a402a; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+  <div class="ticker-badge">APUSH LIVE</div>
+  <div class="ticker-track">
+    <div class="ticker-tape" id="tape">
+      <span class="t-text muted">&nbsp;&nbsp;loading market data…</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const sep  = ()     => `<span class="t-sep">◆</span>`;
+const pill = (c, t) => `<span class="t-pill ${c}">${t}</span>`;
+const txt  = (c, t) => `<span class="t-text ${c}">${t}&nbsp;</span>`;
+
+function typeColor(type) {
+  if (type === 'Gauntlet FRQ')   return 'w';
+  if (type === 'Packet of Doom') return 'r';
+  if (type === 'Exam / Due')     return 'r';
+  return 'g';
+}
+
+function typeLabel(type) {
+  if (type === 'Gauntlet FRQ')   return 'GAUNTLET';
+  if (type === 'Packet of Doom') return 'POD';
+  if (type === 'IDs / KT')       return 'IDs';
+  if (type === 'Review / Class') return 'CLASS';
+  if (type === 'Exam / Due')     return 'DUE';
+  return 'TASK';
+}
+
+function urgencyColor(days) {
+  if (days <= 3)  return 'r';
+  if (days <= 10) return 'w';
+  return 'g';
+}
+
+function buildTape({ stats, todayTasks }) {
+  const {
+    gauntletDone, gauntletTotal,
+    podDone, podTotal,
+    totalDone, totalTasks,
+    daysGaunt, daysPOD, daysExam,
+    gauntPace, podPace,
+  } = stats;
+
+  const totalPct = totalTasks ? Math.round(totalDone / totalTasks * 100) : 0;
+  const gcol = urgencyColor(daysGaunt);
+  const pcol = urgencyColor(daysPOD);
+  const ecol = urgencyColor(daysExam);
+
+  let html = '';
+
+  // Big picture
+  html += sep();
+  html += pill('r', 'GAUNTLET');
+  html += txt('w', `${gauntletDone} / ${gauntletTotal} FRQs`);
+  html += txt('dim', '·');
+  html += txt(gcol, 'due May 1');
+  html += txt('dim', '·');
+  html += txt('w', `${gauntPace}/day needed`);
+
+  html += sep();
+  html += pill('r', 'POD');
+  html += txt('r', `${podDone} / ${podTotal} pages`);
+  html += txt('dim', '·');
+  html += txt(pcol, 'due May 4');
+  html += txt('dim', '·');
+  html += txt('w', `${podPace} pg/day needed`);
+
+  html += sep();
+  html += pill('r', 'EXAM');
+  html += txt(ecol, `T–${daysExam} DAYS`);
+  html += txt('dim', '· May 8 · AP College Board');
+
+  html += sep();
+  html += pill('g', 'PORTFOLIO');
+  html += txt('w', `${totalPct}% complete`);
+  html += txt('dim', `· ${totalDone} of ${totalTasks} tasks closed`);
+
+  // Today's tasks
+  html += sep();
+  html += pill('g', 'TODAY');
+
+  if (todayTasks.length > 0) {
+    todayTasks.forEach(task => {
+      const c = typeColor(task.type);
+      const l = typeLabel(task.type);
+      html += pill(c, l);
+      html += txt(c, task.task);
+      if (task.est) html += txt('dim', `(${task.est})`);
+      html += sep();
+    });
+  } else {
+    html += txt('g', 'No tasks scheduled today');
+    html += sep();
+  }
+
+  // Velocity
+  html += pill('w', 'VELOCITY');
+  html += txt('w', `${gauntPace} FRQ/day`);
+  html += txt('dim', 'to close Gauntlet');
+  html += sep();
+  html += txt('w', `${podPace} pages/day`);
+  html += txt('dim', 'to close POD');
+  html += sep();
+
+  return html;
+}
+
+async function init() {
+  const tape = document.getElementById('tape');
+  try {
+    const res = await fetch('/api/notion');
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+
+    const html = buildTape(data);
+    tape.innerHTML = html + html; // doubled for seamless loop
+    tape.classList.add('running');
+
+    // tune speed to content length
+    const duration = (tape.scrollWidth / 2 / 90).toFixed(1);
+    tape.style.animationDuration = duration + 's';
+
+  } catch (err) {
+    tape.innerHTML = `<span class="t-text muted">&nbsp;&nbsp;⚠ could not load market data — ${err.message}</span>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
