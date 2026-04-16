@@ -39,8 +39,11 @@ export default async function handler(req, res) {
     const getCheck = p => p?.checkbox ?? false;
     const getDate  = p => p?.date?.start ?? '';
 
-    // ── Today's date (EST) ──
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Detroit' }); // YYYY-MM-DD
+    // ── Today's date in ET (Michigan) ──
+    const todayStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Detroit',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date()); // YYYY-MM-DD
 
     // ── Build structured task list ──
     const tasks = pages.map(page => {
