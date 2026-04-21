@@ -1058,45 +1058,112 @@ function renderNextUp() {
 }
 
 // ══════════════════════════════════════════════
-//   VELOCITY LOG  (last 4 days)
+//   VELOCITY LOG  — stock-price line chart
 // ══════════════════════════════════════════════
 function renderVelocityLog() {
   if (!_data) return;
   const el = document.getElementById('velocity-body');
   if (!el) return;
 
-  // Build last-4-day date strings (Eastern, descending)
+  // Build last 4 days oldest→newest
   const [ty, tm, td] = _data.stats.todayEastern.split('-').map(Number);
-  const labels = ['TODAY', 'YDAY', '2D AGO', '3D AGO'];
-  const rows = labels.map((label, i) => {
-    const d = new Date(ty, tm - 1, td - i);
+  const xLabels = ['3D', '2D', 'YDAY', 'TODAY'];
+  const dayData = xLabels.map((label, i) => {
+    const offset = 3 - i; // 3,2,1,0 days ago
+    const d = new Date(ty, tm - 1, td - offset);
     const dateStr = [
       d.getFullYear(),
       String(d.getMonth() + 1).padStart(2, '0'),
       String(d.getDate()).padStart(2, '0'),
     ].join('-');
-    const dayTasks = _data.allTasks.filter(t => t.date === dateStr);
-    return { label, dateStr, total: dayTasks.length, done: dayTasks.filter(t => t.done).length };
+    const tasks = _data.allTasks.filter(t => t.date === dateStr);
+    const total = tasks.length;
+    const done  = tasks.filter(t => t.done).length;
+    return { label, total, done, pct: total > 0 ? Math.round(done / total * 100) : null };
   });
 
-  el.innerHTML = rows.map(({ label, total, done }) => {
-    if (!total) return `
-      <div class="vel-day-row">
-        <span class="vel-day-label">${label}</span>
-        <span class="vel-day-empty">no tasks</span>
-      </div>`;
-    const pct = Math.round(done / total * 100);
-    const c   = pct === 100 ? 'g' : pct >= 50 ? 'w' : 'r';
+  const validPts = dayData.filter(d => d.pct !== null);
+  if (!validPts.length) {
+    el.innerHTML = `<div class="skel">No recent data.</div>`;
+    return;
+  }
+
+  // Chart geometry
+  const W = 200, H = 90;
+  const pL = 22, pR = 8, pT = 12, pB = 20;
+  const cW = W - pL - pR, cH = H - pT - pB;
+  const n  = dayData.length - 1;
+
+  // x/y coords for each day (null pct → skip from line but keep x position)
+  const pts = dayData.map((d, i) => ({
+    ...d,
+    x: pL + (i / n) * cW,
+    y: d.pct !== null ? pT + cH - (d.pct / 100) * cH : null,
+  }));
+
+  // Trend color based on today's pct
+  const todayPct = dayData[3].pct;
+  const lastValid = validPts[validPts.length - 1].pct;
+  const hex = lastValid === 100 ? '#4bad6c' : lastValid >= 50 ? '#e07b30' : '#d94040';
+
+  // Build line + area from valid consecutive points
+  const plotPts = pts.filter(p => p.y !== null);
+  let linePath = '', areaPath = '';
+  if (plotPts.length > 1) {
+    linePath = plotPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    areaPath = `${linePath} L${plotPts[plotPts.length-1].x.toFixed(1)},${pT+cH} L${plotPts[0].x.toFixed(1)},${pT+cH} Z`;
+  }
+
+  // Horizontal gridlines at 0 / 50 / 100
+  const grids = [0, 50, 100].map(v => {
+    const gy = pT + cH - (v / 100) * cH;
     return `
-      <div class="vel-day-row">
-        <span class="vel-day-label">${label}</span>
-        <div class="pnl-track" style="flex:1">
-          <div class="pnl-fill ${c}" style="width:0%" data-target="${pct}"></div>
-        </div>
-        <span class="vel-day-stat ${c}">${done}/${total}</span>
-      </div>`;
+      <line x1="${pL}" y1="${gy.toFixed(1)}" x2="${W-pR}" y2="${gy.toFixed(1)}" stroke="#182018" stroke-width="1"/>
+      <text x="${pL-3}" y="${(gy+3).toFixed(1)}" text-anchor="end" font-size="6" fill="#2e5030" font-family="IBM Plex Mono,monospace">${v}</text>`;
   }).join('');
-  animateBars();
+
+  // X-axis labels
+  const xlabels = pts.map(p =>
+    `<text x="${p.x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="6.5" fill="${p.label === 'TODAY' ? hex : '#2e5030'}" font-family="IBM Plex Mono,monospace" font-weight="${p.label === 'TODAY' ? '600' : '400'}">${p.label}</text>`
+  ).join('');
+
+  // Dots + value labels
+  const dots = plotPts.map(p => {
+    const isToday = p.label === 'TODAY';
+    const labelY  = (p.y - 6).toFixed(1);
+    return `
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isToday ? 3.5 : 2}"
+              fill="${isToday ? hex : '#090b09'}" stroke="${hex}" stroke-width="1.5"/>
+      <text x="${p.x.toFixed(1)}" y="${labelY}" text-anchor="middle"
+            font-size="${isToday ? 8 : 7}" fill="${hex}"
+            font-family="IBM Plex Mono,monospace" font-weight="600">${p.pct}%</text>`;
+  }).join('');
+
+  // "Current price" dashed line from last point to right edge
+  const last = plotPts[plotPts.length - 1];
+  const dashLine = last
+    ? `<line x1="${last.x.toFixed(1)}" y1="${last.y.toFixed(1)}" x2="${W-pR}" y2="${last.y.toFixed(1)}"
+             stroke="${hex}" stroke-width="1" stroke-dasharray="3,3" opacity=".4"/>`
+    : '';
+
+  const gid = 'vg' + Date.now();
+  el.style.padding = '6px 8px';
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+      <defs>
+        <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${hex}" stop-opacity=".3"/>
+          <stop offset="100%" stop-color="${hex}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${grids}
+      ${areaPath  ? `<path d="${areaPath}"  fill="url(#${gid})"/>` : ''}
+      ${linePath  ? `<path d="${linePath}"  fill="none" stroke="${hex}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${dashLine}
+      ${dots}
+      ${xlabels}
+    </svg>
+  `;
 }
 
 // ══════════════════════════════════════════════
