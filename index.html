@@ -235,6 +235,94 @@ body {
 .dl-sig { font-size: 7.5px; color: var(--text-dim); }
 
 /* ══════════════════════════════════════════════════════════
+   LEFT COLUMN SCROLL WRAPPER
+══════════════════════════════════════════════════════════ */
+.left-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.left-scroll::-webkit-scrollbar { width: 3px; }
+.left-scroll::-webkit-scrollbar-track { background: transparent; }
+.left-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.panel-body-left {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Next Up ── */
+.nextup-row { display: flex; flex-direction: column; gap: 3px; animation: fadein .3s ease; }
+.nextup-top { display: flex; justify-content: space-between; align-items: center; }
+.nextup-date { font-size: 7.5px; color: var(--text-dim); }
+.nextup-task { font-size: 8.5px; color: var(--green); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 1px; }
+.nextup-est  { font-size: 7.5px; color: var(--text-dim); }
+
+/* ── Practice Timer ── */
+.timer-presets { display: flex; gap: 4px; }
+.timer-preset.active { color: var(--green) !important; border-color: var(--green) !important; background: var(--green-dim) !important; }
+.timer-display {
+  font-size: 32px; font-weight: 500; letter-spacing: .08em;
+  color: var(--green); text-align: center; padding: 8px 0 6px;
+  transition: color .3s;
+}
+.timer-display.timer-done { color: var(--amber); animation: blink 1s step-end 6; }
+.timer-display.timer-running { color: var(--green-hi); }
+.timer-controls { display: flex; gap: 6px; }
+.timer-btn {
+  flex: 1;
+  font-family: var(--mono); font-size: 8px; letter-spacing: .14em;
+  padding: 5px 0; border: 1px solid currentColor;
+  background: transparent; cursor: pointer;
+  transition: background .15s;
+}
+.timer-btn.g { color: var(--green); }
+.timer-btn.g:hover { background: var(--green-dim); }
+.timer-btn.d { color: var(--text-dim); border-color: var(--border); }
+.timer-btn.d:hover { background: var(--surface); }
+
+/* ── Session Log ── */
+.session-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 8.5px; }
+.session-label { color: var(--text-dim); font-size: 7.5px; letter-spacing: .08em; }
+.session-val { color: var(--green); }
+.session-val.w { color: var(--amber); }
+.session-val.r { color: var(--red); }
+
+/* ── Velocity Log ── */
+.vel-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 8.5px; }
+.vel-label { color: var(--text-dim); font-size: 7.5px; letter-spacing: .08em; }
+.vel-val { color: var(--green); }
+.vel-val.w { color: var(--amber); }
+.vel-val.r { color: var(--red); }
+.vel-bar-row { display: flex; align-items: center; gap: 5px; }
+.vel-mini-label { color: var(--text-dim); font-size: 7px; letter-spacing: .06em; width: 28px; flex-shrink: 0; }
+.vel-mini-val   { color: var(--text-dim); font-size: 7px; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ── Time Remaining Today ── */
+.timerem-clock {
+  font-size: 30px; font-weight: 500; letter-spacing: .07em;
+  text-align: center; padding: 6px 0 3px;
+  transition: color .3s;
+}
+.timerem-sub { font-size: 7.5px; color: var(--text-dim); text-align: center; letter-spacing: .1em; margin-bottom: 6px; }
+.timerem-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 8px; }
+.timerem-label { color: var(--text-dim); font-size: 7.5px; letter-spacing: .08em; }
+.timerem-val   { color: var(--green); }
+
+/* ── Period Coverage Radar ── */
+.radar-row { display: flex; align-items: center; gap: 6px; }
+.radar-label { color: var(--text-dim); font-size: 7.5px; letter-spacing: .06em; width: 18px; flex-shrink: 0; }
+.radar-val   { font-size: 7.5px; width: 32px; text-align: right; flex-shrink: 0; }
+.radar-val.g { color: var(--green); }
+.radar-val.w { color: var(--amber); }
+.radar-val.r { color: var(--red); }
+
+/* ══════════════════════════════════════════════════════════
    TODAY'S TASKS (top-right)
 ══════════════════════════════════════════════════════════ */
 .today-panel {
@@ -431,18 +519,59 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 <!-- ══════════════ MAIN GRID ══════════════ -->
 <div class="main">
 
-  <!-- LEFT COLUMN: P&L + Deadlines -->
+  <!-- LEFT COLUMN: P&L + Deadlines + Next Up + Timer + Session -->
   <div class="left-col">
-    <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
-    <div class="panel-body" id="pnl-body">
-      <div class="skel">loading…</div>
-    </div>
+    <div class="left-scroll">
 
-    <div class="col-divider"></div>
+      <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
+      <div class="panel-body-left" id="pnl-body"><div class="skel">loading…</div></div>
 
-    <div class="panel-head">DEADLINE ORDER BOOK</div>
-    <div class="panel-body" id="dl-body">
-      <div class="skel">loading…</div>
+      <div class="col-divider"></div>
+
+      <div class="panel-head">DEADLINE ORDER BOOK</div>
+      <div class="panel-body-left" id="dl-body"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">NEXT UP</div>
+      <div class="panel-body-left" id="nextup-body"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">VELOCITY LOG</div>
+      <div class="panel-body-left" id="velocity-body"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">TIME REMAINING TODAY</div>
+      <div class="panel-body-left" id="timerem-body"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">PERIOD COVERAGE</div>
+      <div class="panel-body-left" id="radar-body"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">PRACTICE TIMER</div>
+      <div class="panel-body-left" id="timer-body">
+        <div class="timer-presets">
+          <button class="filter-btn timer-preset active" onclick="setTimerPreset(25,this)">25M</button>
+          <button class="filter-btn timer-preset" onclick="setTimerPreset(15,this)">15M</button>
+          <button class="filter-btn timer-preset" onclick="setTimerPreset(5,this)">5M</button>
+        </div>
+        <div id="timer-display" class="timer-display">25:00</div>
+        <div class="timer-controls">
+          <button class="timer-btn g" id="timer-toggle-btn" onclick="toggleTimer()">START</button>
+          <button class="timer-btn d" onclick="resetTimer()">RESET</button>
+        </div>
+      </div>
+
+      <div class="col-divider"></div>
+
+      <div class="panel-head">SESSION LOG</div>
+      <div class="panel-body-left" id="session-body"><div class="skel">loading…</div></div>
+
     </div>
   </div>
 
@@ -793,6 +922,11 @@ function reRenderDashboard() {
   document.getElementById('today-body').innerHTML = renderToday(_data);
   bindCheckboxes();
   renderTable();
+  renderNextUp();
+  renderVelocityLog();
+  renderTimeRemaining();
+  renderPeriodRadar();
+  renderSession();
 }
 
 // ══════════════════════════════════════════════
@@ -806,6 +940,10 @@ async function toggleTask(pageId, currentDone) {
   const todayTask = _data.todayTasks.find(t => t.pageId === pageId);
   if (allTask)   allTask.done   = newDone;
   if (todayTask) todayTask.done = newDone;
+
+  // Track session completions
+  if (newDone) _session.completions++;
+  else if (_session.completions > 0) _session.completions--;
 
   // Recompute stats and re-render everything immediately
   recomputeStats();
@@ -824,6 +962,8 @@ async function toggleTask(pageId, currentDone) {
     // Rollback
     if (allTask)   allTask.done   = currentDone;
     if (todayTask) todayTask.done = currentDone;
+    if (newDone) _session.completions--;
+    else _session.completions++;
     recomputeStats();
     reRenderDashboard();
     alert(`⚠ Could not sync to Notion: ${err.message}`);
@@ -838,6 +978,262 @@ function bindCheckboxes() {
     if (!check || !task) return;
     check.onclick = () => toggleTask(pageId, task.done);
   });
+}
+
+// ══════════════════════════════════════════════
+//   NEXT UP
+// ══════════════════════════════════════════════
+function renderNextUp() {
+  if (!_data) return;
+  const el = document.getElementById('nextup-body');
+  if (!el) return;
+
+  const upcoming = _data.allTasks
+    .filter(t => !t.done && t.date)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 4);
+
+  if (!upcoming.length) {
+    el.innerHTML = `<div class="skel">All tasks complete ✓</div>`;
+    return;
+  }
+  el.innerHTML = upcoming.map((t, i) => {
+    const c = typeColor(t.type);
+    const l = typeLabel(t.type);
+    return `
+      ${i > 0 ? '<div style="height:1px;background:var(--border);margin:2px 0"></div>' : ''}
+      <div class="nextup-row">
+        <div class="nextup-top">
+          <span class="type-pill ${c}">${l}</span>
+          <span class="nextup-date">${fmtDate(t.date)}</span>
+        </div>
+        <div class="nextup-task" title="${t.task}">${t.task}</div>
+        ${t.est ? `<div class="nextup-est">~${t.est}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//   VELOCITY LOG
+// ══════════════════════════════════════════════
+function renderVelocityLog() {
+  if (!_data) return;
+  const el = document.getElementById('velocity-body');
+  if (!el) return;
+  const { stats, todayTasks } = _data;
+  const { gauntletDone, gauntletTotal, podDone, podTotal,
+          totalDone, totalTasks, daysGaunt, daysPOD, gauntPace, podPace } = stats;
+  const todayDone  = todayTasks.filter(t => t.done).length;
+  const todayTotal = todayTasks.length;
+  const todayColor = todayTotal > 0 && todayDone === todayTotal ? '' : todayTotal > 0 && todayDone === 0 ? 'r' : 'w';
+  const gPct = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
+  const pPct = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
+
+  el.innerHTML = `
+    <div class="vel-row">
+      <span class="vel-label">TODAY</span>
+      <span class="vel-val ${todayColor}">${todayDone}/${todayTotal} tasks</span>
+    </div>
+    <div class="vel-row">
+      <span class="vel-label">REMAINING</span>
+      <span class="vel-val">${totalTasks - totalDone} tasks left</span>
+    </div>
+    <div class="vel-row" style="margin-top:4px">
+      <span class="vel-label">GAUNT PACE</span>
+      <span class="vel-val w">${gauntPace} FRQ/day</span>
+    </div>
+    <div class="vel-row">
+      <span class="vel-label">POD PACE</span>
+      <span class="vel-val r">${podPace} pg/day</span>
+    </div>
+    <div class="vel-bar-row" style="margin-top:6px">
+      <span class="vel-mini-label">GAUNT</span>
+      <div class="pnl-track" style="flex:1">
+        <div class="pnl-fill w" style="width:0%" data-target="${gPct}"></div>
+      </div>
+      <span class="vel-mini-val">${gauntletDone}/${gauntletTotal}</span>
+    </div>
+    <div class="vel-bar-row">
+      <span class="vel-mini-label">POD</span>
+      <div class="pnl-track" style="flex:1">
+        <div class="pnl-fill r" style="width:0%" data-target="${pPct}"></div>
+      </div>
+      <span class="vel-mini-val">${podDone}/${podTotal}</span>
+    </div>
+  `;
+  animateBars();
+}
+
+// ══════════════════════════════════════════════
+//   TIME REMAINING TODAY
+// ══════════════════════════════════════════════
+function renderTimeRemaining() {
+  const el = document.getElementById('timerem-body');
+  if (!el) return;
+
+  // Current ET time
+  const nowStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const nowET  = new Date(nowStr);
+  const midnight = new Date(nowET);
+  midnight.setHours(24, 0, 0, 0);
+  const diffMs = midnight - nowET;
+  const diffH  = Math.floor(diffMs / 3_600_000);
+  const diffM  = Math.floor((diffMs % 3_600_000) / 60_000);
+  const poms   = Math.floor(diffMs / (25 * 60_000));
+  const hr     = nowET.getHours();
+  const isLate = hr >= 22 || hr < 4;
+  const cssColor = isLate ? 'var(--red)' : diffH < 3 ? 'var(--amber)' : 'var(--green)';
+
+  el.innerHTML = `
+    <div class="timerem-clock" style="color:${cssColor}">
+      ${String(diffH).padStart(2,'0')}:${String(diffM).padStart(2,'0')}
+    </div>
+    <div class="timerem-sub">UNTIL MIDNIGHT ET</div>
+    <div class="timerem-row">
+      <span class="timerem-label">POMODOROS LEFT</span>
+      <span class="timerem-val">${poms} × 25M</span>
+    </div>
+    ${isLate ? `<div style="font-size:7.5px;color:var(--red);text-align:center;margin-top:5px;letter-spacing:.08em">⚠ LATE SESSION</div>` : ''}
+  `;
+}
+
+// ══════════════════════════════════════════════
+//   PERIOD COVERAGE RADAR
+// ══════════════════════════════════════════════
+function renderPeriodRadar() {
+  if (!_data) return;
+  const el = document.getElementById('radar-body');
+  if (!el) return;
+
+  // Parse APUSH period from tag (e.g. "P3", "Period 4", "p5", "3")
+  function getPeriod(tag) {
+    if (!tag) return null;
+    const m = tag.match(/\b([1-9])\b/);
+    return m ? parseInt(m[1]) : null;
+  }
+
+  const periods = {};
+  for (let i = 1; i <= 9; i++) periods[i] = { total: 0, done: 0 };
+
+  _data.allTasks.forEach(t => {
+    const p = getPeriod(t.tag) ?? getPeriod(t.task.match(/period\s*([1-9])/i)?.[1]);
+    if (p) { periods[p].total++; if (t.done) periods[p].done++; }
+  });
+
+  const active = Object.entries(periods).filter(([, v]) => v.total > 0);
+
+  if (!active.length) {
+    el.innerHTML = `<div class="skel">Add period tags (P1–P9) to tasks in Notion to track coverage.</div>`;
+    return;
+  }
+
+  el.innerHTML = active.map(([p, v]) => {
+    const pct = Math.round(v.done / v.total * 100);
+    const c   = pct === 100 ? 'g' : pct >= 50 ? 'w' : 'r';
+    return `
+      <div class="radar-row">
+        <span class="radar-label">P${p}</span>
+        <div class="pnl-track" style="flex:1">
+          <div class="pnl-fill ${c}" style="width:0%" data-target="${pct}"></div>
+        </div>
+        <span class="radar-val ${c}">${v.done}/${v.total}</span>
+      </div>
+    `;
+  }).join('');
+  animateBars();
+}
+
+// ══════════════════════════════════════════════
+//   PRACTICE TIMER
+// ══════════════════════════════════════════════
+const _timer = { total: 25 * 60, remaining: 25 * 60, running: false, interval: null };
+
+function setTimerPreset(minutes, btn) {
+  document.querySelectorAll('.timer-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  _timer.total = minutes * 60;
+  resetTimer();
+}
+
+function toggleTimer() {
+  const btn  = document.getElementById('timer-toggle-btn');
+  const disp = document.getElementById('timer-display');
+  if (_timer.running) {
+    clearInterval(_timer.interval);
+    _timer.running = false;
+    if (btn)  btn.textContent = 'START';
+    if (disp) disp.classList.remove('timer-running');
+  } else {
+    if (_timer.remaining <= 0) { _timer.remaining = _timer.total; }
+    _timer.running = true;
+    if (btn)  btn.textContent = 'PAUSE';
+    if (disp) { disp.classList.add('timer-running'); disp.classList.remove('timer-done'); }
+    _timer.interval = setInterval(() => {
+      _timer.remaining--;
+      updateTimerDisplay();
+      if (_timer.remaining <= 0) {
+        clearInterval(_timer.interval);
+        _timer.running = false;
+        const b = document.getElementById('timer-toggle-btn');
+        const d = document.getElementById('timer-display');
+        if (b) b.textContent = 'START';
+        if (d) { d.classList.remove('timer-running'); d.classList.add('timer-done'); }
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(_timer.interval);
+  _timer.running = false;
+  _timer.remaining = _timer.total;
+  const btn  = document.getElementById('timer-toggle-btn');
+  const disp = document.getElementById('timer-display');
+  if (btn)  btn.textContent = 'START';
+  if (disp) disp.classList.remove('timer-running', 'timer-done');
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  if (!el) return;
+  const m = Math.floor(_timer.remaining / 60).toString().padStart(2, '0');
+  const s = (_timer.remaining % 60).toString().padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+}
+
+// ══════════════════════════════════════════════
+//   SESSION LOG
+// ══════════════════════════════════════════════
+const _session = { start: Date.now(), completions: 0 };
+
+function renderSession() {
+  const el = document.getElementById('session-body');
+  if (!el) return;
+  const elapsed    = Math.floor((Date.now() - _session.start) / 60_000);
+  const todayTasks = _data?.todayTasks ?? [];
+  const todayDone  = todayTasks.filter(t => t.done).length;
+  const todayTotal = todayTasks.length;
+  const rate       = todayTotal > 0 ? Math.round(todayDone / todayTotal * 100) : 0;
+  const rateColor  = rate >= 80 ? '' : rate >= 40 ? 'w' : todayTotal > 0 ? 'r' : '';
+
+  el.innerHTML = `
+    <div class="session-row">
+      <span class="session-label">SESSION TIME</span>
+      <span class="session-val">${elapsed < 1 ? '<1m' : elapsed + 'm'} active</span>
+    </div>
+    <div class="session-row">
+      <span class="session-label">COMPLETED</span>
+      <span class="session-val">+${_session.completions} this session</span>
+    </div>
+    <div class="session-row" style="margin-top:2px">
+      <span class="session-label">TODAY WIN RATE</span>
+      <span class="session-val ${rateColor}">${todayTotal ? `${todayDone}/${todayTotal} · ${rate}%` : 'no tasks today'}</span>
+    </div>
+    ${todayTotal ? `<div class="pnl-track" style="margin-top:5px"><div class="pnl-fill g" style="width:0%" data-target="${rate}"></div></div>` : ''}
+  `;
+  animateBars();
 }
 
 // ══════════════════════════════════════════════
@@ -914,6 +1310,17 @@ async function loadData() {
     // ── Table ──
     renderTable();
 
+    // ── Next Up ──
+    renderNextUp();
+
+    // ── Velocity / Time / Period ──
+    renderVelocityLog();
+    renderTimeRemaining();
+    renderPeriodRadar();
+
+    // ── Session ──
+    renderSession();
+
     setRefreshTime();
     flashRefreshDot();
   } catch (err) {
@@ -930,6 +1337,11 @@ async function loadData() {
 // initial load + auto-refresh every 60s
 loadData();
 setInterval(loadData, 60_000);
+// refresh live clocks every minute
+setInterval(() => {
+  renderTimeRemaining();
+  if (_data) renderSession();
+}, 60_000);
 </script>
 </body>
 </html>
