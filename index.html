@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ══════════════════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════════════════ */
 :root {
   --bg:        #090b09;
   --bg2:       #0c0e0c;
@@ -37,9 +40,17 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════════════════ */
 @keyframes scroll  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.2} }
 @keyframes fadein  { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+/* ══════════════════════════════════════════════════════════
+   TICKER
+══════════════════════════════════════════════════════════ */
 .ticker-wrap {
   flex-shrink: 0;
   height: 34px;
@@ -79,13 +90,21 @@ body {
 }
 .ticker-tape.running { animation: scroll linear infinite; }
 .ticker-tape:hover   { animation-play-state: paused; }
+
 .t-sep  { color: var(--text-dim); font-size: 12px; padding: 0 16px; user-select: none; }
-.t-pill { font-size: 7.5px; font-weight: 600; letter-spacing: .14em; border: 1px solid currentColor; padding: 1px 5px; margin-right: 6px; }
+.t-pill {
+  font-size: 7.5px; font-weight: 600; letter-spacing: .14em;
+  border: 1px solid currentColor; padding: 1px 5px; margin-right: 6px;
+}
 .t-val { font-size: 10px; letter-spacing: .02em; margin-right: 4px; }
 .g { color: var(--green); }.g.t-pill { border-color: var(--green-dim); }
 .w { color: var(--amber); }.w.t-pill { border-color: var(--amber-dim); }
 .r { color: var(--red);   }.r.t-pill { border-color: var(--red-dim);   }
 .d { color: var(--text-dim); }
+
+/* ══════════════════════════════════════════════════════════
+   STATUS BAR
+══════════════════════════════════════════════════════════ */
 .status-bar {
   flex-shrink: 0;
   height: 22px;
@@ -104,6 +123,10 @@ body {
 .sb .val { color: var(--green); }
 .sb.w .val { color: var(--amber); }
 .sb.r .val { color: var(--red); }
+
+/* ══════════════════════════════════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════════════════════════════════ */
 .main {
   flex: 1;
   display: grid;
@@ -114,7 +137,14 @@ body {
   overflow: hidden;
   min-height: 0;
 }
-.panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── panel shell ── */
+.panel {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .panel-head {
   flex-shrink: 0;
   font-size: 7.5px;
@@ -131,6 +161,10 @@ body {
 .panel-body::-webkit-scrollbar { width: 3px; }
 .panel-body::-webkit-scrollbar-track { background: transparent; }
 .panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ══════════════════════════════════════════════════════════
+   LEFT COLUMN  (P&L + Deadlines) — spans 2 rows
+══════════════════════════════════════════════════════════ */
 .left-col {
   grid-row: 1 / 3;
   background: var(--bg);
@@ -139,7 +173,15 @@ body {
   border-right: 1px solid var(--border);
   overflow: hidden;
 }
-.col-divider { flex-shrink: 0; height: 1px; background: var(--border); }
+
+/* ── divider inside left col ── */
+.col-divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── P&L bars ── */
 .pnl-item { display: flex; flex-direction: column; gap: 3px; animation: fadein .4s ease; }
 .pnl-top  { display: flex; justify-content: space-between; align-items: baseline; }
 .pnl-name { font-size: 8.5px; color: var(--green); letter-spacing: .07em; }
@@ -147,18 +189,40 @@ body {
 .pnl-pct.g { color: var(--green); }
 .pnl-pct.w { color: var(--amber); }
 .pnl-pct.r { color: var(--red);   }
-.pnl-track { height: 5px; background: var(--surface); border: 1px solid var(--border2); border-radius: 1px; overflow: hidden; }
-.pnl-fill { height: 100%; border-radius: 1px; transition: width 1.4s cubic-bezier(.4,0,.2,1); }
+
+.pnl-track {
+  height: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.pnl-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 1.4s cubic-bezier(.4,0,.2,1);
+}
 .pnl-fill.g { background: var(--green); }
 .pnl-fill.w { background: var(--amber); }
 .pnl-fill.r { background: var(--red);   }
+
 .pnl-sub { display: flex; justify-content: space-between; font-size: 7.5px; color: var(--text-dim); }
 .pnl-sub .warn { color: var(--amber); }
 .pnl-sub .danger { color: var(--red); }
-.dl-card { border: 1px solid; padding: 5px 8px; display: flex; flex-direction: column; gap: 2px; animation: fadein .4s ease; }
+
+/* ── Deadline cards ── */
+.dl-card {
+  border: 1px solid;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadein .4s ease;
+}
 .dl-card.r { border-color: var(--red-dim);   background: rgba(217,64,64,.04);  }
 .dl-card.w { border-color: var(--amber-dim); background: rgba(224,123,48,.04); }
 .dl-card.g { border-color: var(--green-dim); background: rgba(75,173,108,.04); }
+
 .dl-top { display: flex; justify-content: space-between; align-items: baseline; }
 .dl-ticker { font-size: 10px; font-weight: 500; letter-spacing: .08em; }
 .dl-card.r .dl-ticker { color: var(--red); }
@@ -169,7 +233,21 @@ body {
 .dl-card.w .dl-days { color: var(--amber); }
 .dl-card.g .dl-days { color: var(--green); }
 .dl-sig { font-size: 7.5px; color: var(--text-dim); }
-.today-panel { grid-column: 2; grid-row: 1; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; max-height: 260px; }
+
+/* ══════════════════════════════════════════════════════════
+   TODAY'S TASKS (top-right)
+══════════════════════════════════════════════════════════ */
+.today-panel {
+  grid-column: 2;
+  grid-row: 1;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 260px;
+}
+
+/* task row */
 .pos-row {
   display: grid;
   grid-template-columns: 24px 38px 1fr auto 22px;
@@ -183,6 +261,8 @@ body {
 }
 .pos-row:last-child { border-bottom: none; }
 .pos-row:hover { background: rgba(75,173,108,.025); }
+
+/* checkbox */
 .pos-check {
   width: 14px; height: 14px;
   border: 1px solid var(--border2);
@@ -193,37 +273,110 @@ body {
   flex-shrink: 0;
 }
 .pos-check:hover { border-color: var(--green-mid); }
-.pos-check.checked { background: var(--green-dim); border-color: var(--green-mid); }
+.pos-check.checked {
+  background: var(--green-dim);
+  border-color: var(--green-mid);
+}
 .pos-check.checked::after { content: '✓'; font-size: 9px; color: var(--green); }
 .pos-check.pending { opacity: .5; pointer-events: none; }
-.pos-tag { font-size: 7px; font-weight: 500; letter-spacing: .07em; padding: 1px 4px; border: 1px solid currentColor; text-align: center; white-space: nowrap; }
+
+/* tag pill */
+.pos-tag {
+  font-size: 7px; font-weight: 500; letter-spacing: .07em;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  text-align: center;
+  white-space: nowrap;
+}
 .pos-tag.g { color: var(--green); border-color: var(--green-dim); }
 .pos-tag.w { color: var(--amber); border-color: var(--amber-dim); }
 .pos-tag.r { color: var(--red);   border-color: var(--red-dim);   }
 .pos-tag.d { color: var(--text-mid); border-color: var(--border); }
-.pos-name { color: var(--green); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .2s; }
+
+.pos-name {
+  color: var(--green);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: color .2s;
+}
 .pos-name.done { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--text-dim); }
 .pos-est { color: var(--text-dim); font-size: 8px; white-space: nowrap; }
+.pos-flash { animation: blink .5s step-end 2; }
+
+/* empty state */
 .empty-state { font-size: 9px; color: var(--text-dim); font-style: italic; padding: 12px 0; }
-.table-panel { grid-column: 2; grid-row: 2; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
-.filter-bar { flex-shrink: 0; padding: 5px 10px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* ══════════════════════════════════════════════════════════
+   FULL TASK TABLE (bottom-right)
+══════════════════════════════════════════════════════════ */
+.table-panel {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* filter bar */
+.filter-bar {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 .filter-label { font-size: 7.5px; color: var(--text-dim); letter-spacing: .12em; margin-right: 2px; }
-.filter-btn { font-family: var(--mono); font-size: 7.5px; letter-spacing: .1em; color: var(--text-dim); background: transparent; border: 1px solid var(--border); padding: 2px 7px; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.filter-btn {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
 .filter-btn:hover { color: var(--green); border-color: var(--green-mid); }
 .filter-btn.active { color: var(--green); border-color: var(--green); background: var(--green-dim); }
 .filter-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
+
+/* table */
 .table-scroll { flex: 1; overflow-y: auto; min-height: 0; }
 .table-scroll::-webkit-scrollbar { width: 3px; }
 .table-scroll::-webkit-scrollbar-track { background: transparent; }
 .table-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5px;
+}
 thead { position: sticky; top: 0; z-index: 2; }
-th { background: var(--surface); color: var(--text-mid); letter-spacing: .12em; font-size: 7px; font-weight: 500; text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--border2); white-space: nowrap; }
-td { padding: 4px 10px; border-bottom: 1px solid #101810; color: var(--green); vertical-align: middle; }
+th {
+  background: var(--surface);
+  color: var(--text-mid);
+  letter-spacing: .12em;
+  font-size: 7px;
+  font-weight: 500;
+  text-align: left;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+td {
+  padding: 4px 10px;
+  border-bottom: 1px solid #101810;
+  color: var(--green);
+  vertical-align: middle;
+}
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(75,173,108,.02); }
 tr.done-row td { color: var(--text-dim); }
 tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var(--text-dim); }
+
 .td-name { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .td-type { white-space: nowrap; }
 .td-date { white-space: nowrap; color: var(--text-mid); font-size: 8px; }
@@ -232,18 +385,34 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .td-done { text-align: center; font-size: 10px; }
 .td-done.y { color: var(--green); }
 .td-done.n { color: var(--border2); }
-.type-pill { font-size: 7px; font-weight: 500; letter-spacing: .07em; padding: 1px 4px; border: 1px solid currentColor; }
+
+.type-pill {
+  font-size: 7px; font-weight: 500; letter-spacing: .07em;
+  padding: 1px 4px; border: 1px solid currentColor;
+}
 .type-pill.g { color: var(--green); border-color: var(--green-dim); }
 .type-pill.w { color: var(--amber); border-color: var(--amber-dim); }
 .type-pill.r { color: var(--red);   border-color: var(--red-dim);   }
 .type-pill.d { color: var(--text-mid); border-color: var(--border); }
+
+/* loading skeleton */
 .skel { color: var(--text-dim); font-size: 9px; font-style: italic; padding: 16px; }
-.refresh-dot { position: fixed; bottom: 8px; right: 10px; font-size: 7px; color: var(--text-dim); letter-spacing: .1em; display: flex; align-items: center; gap: 5px; }
+
+/* ══════════════════════════════════════════════════════════
+   REFRESH INDICATOR (bottom-right corner)
+══════════════════════════════════════════════════════════ */
+.refresh-dot {
+  position: fixed; bottom: 8px; right: 10px;
+  font-size: 7px; color: var(--text-dim); letter-spacing: .1em;
+  display: flex; align-items: center; gap: 5px;
+}
 .refresh-dot .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 .refresh-dot .dot.spin { animation: blink .6s step-end 3; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════ TICKER ══════════════ -->
 <div class="ticker-wrap">
   <div class="ticker-badge">APUSH&nbsp;LIVE</div>
   <div class="ticker-track">
@@ -253,21 +422,39 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   </div>
   <div class="ticker-fade"></div>
 </div>
+
+<!-- ══════════════ STATUS BAR ══════════════ -->
 <div class="status-bar" id="status-bar">
   <div class="sb"><div class="dot"></div><span>LOADING…</span></div>
 </div>
+
+<!-- ══════════════ MAIN GRID ══════════════ -->
 <div class="main">
+
+  <!-- LEFT COLUMN: P&L + Deadlines -->
   <div class="left-col">
     <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
-    <div class="panel-body" id="pnl-body"><div class="skel">loading…</div></div>
+    <div class="panel-body" id="pnl-body">
+      <div class="skel">loading…</div>
+    </div>
+
     <div class="col-divider"></div>
+
     <div class="panel-head">DEADLINE ORDER BOOK</div>
-    <div class="panel-body" id="dl-body"><div class="skel">loading…</div></div>
+    <div class="panel-body" id="dl-body">
+      <div class="skel">loading…</div>
+    </div>
   </div>
+
+  <!-- TOP RIGHT: Today's Positions -->
   <div class="today-panel panel">
     <div class="panel-head">TODAY'S POSITIONS <span class="live">◉ LIVE</span></div>
-    <div class="panel-body" id="today-body"><div class="skel">loading…</div></div>
+    <div class="panel-body" id="today-body">
+      <div class="skel">loading…</div>
+    </div>
   </div>
+
+  <!-- BOTTOM RIGHT: Full Task Table -->
   <div class="table-panel">
     <div class="panel-head">
       FULL ORDER BOOK
@@ -293,21 +480,40 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>TASK</th><th>TYPE</th><th>DATE</th><th>EST</th><th>WEEK</th><th>✓</th></tr></thead>
-        <tbody id="table-body"><tr><td colspan="6" class="skel">loading…</td></tr></tbody>
+        <thead>
+          <tr>
+            <th>TASK</th>
+            <th>TYPE</th>
+            <th>DATE</th>
+            <th>EST</th>
+            <th>WEEK</th>
+            <th>✓</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6" class="skel">loading…</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 </div>
+
+<!-- refresh indicator -->
 <div class="refresh-dot">
   <div class="dot" id="rdot"></div>
   <span id="rtime">—</span>
 </div>
+
 <script>
+// ══════════════════════════════════════════════
+//   HELPERS
+// ══════════════════════════════════════════════
 const sep  = ()     => `<span class="t-sep">◆</span>`;
 const pill = (c, t) => `<span class="t-pill ${c}">${t}</span>`;
 const tv   = (c, t) => `<span class="t-val ${c}">${t}&nbsp;</span>`;
+
 function urgency(days) { return days <= 4 ? 'r' : days <= 10 ? 'w' : 'g'; }
+
 function typeColor(type) {
   if (type === 'Gauntlet FRQ')   return 'w';
   if (type === 'Packet of Doom') return 'r';
@@ -333,16 +539,26 @@ function weekShort(w) {
   if (!w) return '—';
   return w.replace('Week ', 'W').split(' —')[0];
 }
+
+// ══════════════════════════════════════════════
+//   STATE
+// ══════════════════════════════════════════════
 let _data = null;
 let _weekFilter = 'ALL';
 let _typeFilter = 'ALL';
-let _showDone   = true;
+let _showDone   = true; // show done tasks by default in the table
+
+// ══════════════════════════════════════════════
+//   RENDER TICKER
+// ══════════════════════════════════════════════
 function renderTicker({ stats, todayTasks }) {
   const { gauntletDone, gauntletTotal, podDone, podTotal,
           totalDone, totalTasks, daysGaunt, daysPOD, daysExam,
           gauntPace, podPace } = stats;
+
   const totalPct = totalTasks ? Math.round(totalDone / totalTasks * 100) : 0;
   const gc = urgency(daysGaunt), pc = urgency(daysPOD), ec = urgency(daysExam);
+
   let h = '';
   h += sep();
   h += pill('r','GAUNTLET');
@@ -385,6 +601,10 @@ function renderTicker({ stats, todayTasks }) {
   h += sep();
   return h;
 }
+
+// ══════════════════════════════════════════════
+//   RENDER STATUS BAR
+// ══════════════════════════════════════════════
 function renderStatus({ stats }) {
   const { gauntletDone, gauntletTotal, podDone, podTotal,
           totalDone, totalTasks, daysExam, gauntPace, podPace } = stats;
@@ -400,31 +620,54 @@ function renderStatus({ stats }) {
     <div class="sb"><div class="dot"></div><span>PORTFOLIO</span><span class="val">${totPct}%</span></div>
   `;
 }
+
+// ══════════════════════════════════════════════
+//   RENDER P&L
+// ══════════════════════════════════════════════
 function renderPnL({ stats }) {
   const { gauntletDone, gauntletTotal, podDone, podTotal,
           totalDone, totalTasks, daysGaunt, daysPOD, gauntPace, podPace } = stats;
-  const gPct = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
-  const pPct = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
-  const tPct = totalTasks    ? Math.round(totalDone    / totalTasks    * 100) : 0;
+  const gPct  = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
+  const pPct  = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
+  const tPct  = totalTasks    ? Math.round(totalDone    / totalTasks    * 100) : 0;
   const gc = urgency(daysGaunt), pc = urgency(daysPOD);
   return `
     <div class="pnl-item">
-      <div class="pnl-top"><span class="pnl-name">GAUNT-FRQ</span><span class="pnl-pct ${gc}">${gPct}%</span></div>
+      <div class="pnl-top">
+        <span class="pnl-name">GAUNT-FRQ</span>
+        <span class="pnl-pct ${gc}">${gPct}%</span>
+      </div>
       <div class="pnl-track"><div class="pnl-fill ${gc}" style="width:0%" data-target="${gPct}"></div></div>
-      <div class="pnl-sub"><span>${gauntletDone} / ${gauntletTotal} filed</span><span class="warn">▲ ${gauntPace}/day · ${daysGaunt}d left</span></div>
+      <div class="pnl-sub">
+        <span>${gauntletDone} / ${gauntletTotal} filed</span>
+        <span class="warn">▲ ${gauntPace}/day · ${daysGaunt}d left</span>
+      </div>
     </div>
     <div class="pnl-item">
-      <div class="pnl-top"><span class="pnl-name">POD-PAGE</span><span class="pnl-pct ${pc}">${pPct}%</span></div>
+      <div class="pnl-top">
+        <span class="pnl-name">POD-PAGE</span>
+        <span class="pnl-pct ${pc}">${pPct}%</span>
+      </div>
       <div class="pnl-track"><div class="pnl-fill ${pc}" style="width:0%" data-target="${pPct}"></div></div>
-      <div class="pnl-sub"><span>${podDone} / ${podTotal} filed</span><span class="danger">▲ ${podPace} pg/day · ${daysPOD}d left</span></div>
+      <div class="pnl-sub">
+        <span>${podDone} / ${podTotal} filed</span>
+        <span class="danger">▲ ${podPace} pg/day · ${daysPOD}d left</span>
+      </div>
     </div>
     <div class="pnl-item">
-      <div class="pnl-top"><span class="pnl-name">PORTFOLIO</span><span class="pnl-pct g">${tPct}%</span></div>
+      <div class="pnl-top">
+        <span class="pnl-name">PORTFOLIO</span>
+        <span class="pnl-pct g">${tPct}%</span>
+      </div>
       <div class="pnl-track"><div class="pnl-fill g" style="width:0%" data-target="${tPct}"></div></div>
-      <div class="pnl-sub"><span>${totalDone} / ${totalTasks} tasks closed</span></div>
+      <div class="pnl-sub">
+        <span>${totalDone} / ${totalTasks} tasks closed</span>
+      </div>
     </div>
   `;
 }
+
+// animate bars after inject
 function animateBars() {
   requestAnimationFrame(() => {
     document.querySelectorAll('.pnl-fill[data-target]').forEach(el => {
@@ -432,26 +675,45 @@ function animateBars() {
     });
   });
 }
+
+// ══════════════════════════════════════════════
+//   RENDER DEADLINES
+// ══════════════════════════════════════════════
 function renderDeadlines({ stats }) {
   const { daysGaunt, daysPOD, daysExam } = stats;
   const gc = urgency(daysGaunt), pc = urgency(daysPOD), ec = urgency(daysExam);
   return `
     <div class="dl-card ${gc}">
-      <div class="dl-top"><span class="dl-ticker">GAUNT-FRQ</span><span class="dl-days">${daysGaunt}D OUT</span></div>
+      <div class="dl-top">
+        <span class="dl-ticker">GAUNT-FRQ</span>
+        <span class="dl-days">${daysGaunt}D OUT</span>
+      </div>
       <div class="dl-sig">All 40 FRQs · Due May 1 · Run w/ Mrs. D</div>
     </div>
     <div class="dl-card ${pc}">
-      <div class="dl-top"><span class="dl-ticker">POD-PAGE</span><span class="dl-days">${daysPOD}D OUT</span></div>
+      <div class="dl-top">
+        <span class="dl-ticker">POD-PAGE</span>
+        <span class="dl-days">${daysPOD}D OUT</span>
+      </div>
       <div class="dl-sig">19 pages · 5 parts · Due May 4</div>
     </div>
     <div class="dl-card ${ec}">
-      <div class="dl-top"><span class="dl-ticker">APUSH-EXAM</span><span class="dl-days">${daysExam}D OUT</span></div>
+      <div class="dl-top">
+        <span class="dl-ticker">APUSH-EXAM</span>
+        <span class="dl-days">${daysExam}D OUT</span>
+      </div>
       <div class="dl-sig">Final settlement · May 8 · AP College Board</div>
     </div>
   `;
 }
+
+// ══════════════════════════════════════════════
+//   RENDER TODAY'S TASKS
+// ══════════════════════════════════════════════
 function renderToday({ todayTasks }) {
-  if (!todayTasks.length) return `<div class="empty-state">No tasks scheduled for today.</div>`;
+  if (!todayTasks.length) {
+    return `<div class="empty-state">No tasks scheduled for today.</div>`;
+  }
   return todayTasks.map(t => {
     const c = typeColor(t.type);
     const l = typeLabel(t.type);
@@ -468,15 +730,26 @@ function renderToday({ todayTasks }) {
     `;
   }).join('');
 }
+
+// ══════════════════════════════════════════════
+//   RENDER TABLE
+// ══════════════════════════════════════════════
 function renderTable() {
   if (!_data) return;
   let rows = _data.allTasks;
+
   if (_weekFilter !== 'ALL') rows = rows.filter(t => t.week === _weekFilter);
   if (_typeFilter !== 'ALL') rows = rows.filter(t => t.type === _typeFilter);
   if (!_showDone)            rows = rows.filter(t => !t.done);
-  document.getElementById('table-count').textContent = `${rows.length} RECORD${rows.length !== 1 ? 'S' : ''}`;
+
+  document.getElementById('table-count').textContent =
+    `${rows.length} RECORD${rows.length !== 1 ? 'S' : ''}`;
+
   const tbody = document.getElementById('table-body');
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="skel">No records match filter.</td></tr>`; return; }
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="skel">No records match filter.</td></tr>`;
+    return;
+  }
   tbody.innerHTML = rows.map(t => {
     const c = typeColor(t.type);
     const l = typeLabel(t.type);
@@ -487,22 +760,57 @@ function renderTable() {
         <td class="td-date">${fmtDate(t.date)}</td>
         <td class="td-est">${t.est || '—'}</td>
         <td class="td-week">${weekShort(t.week)}</td>
-        <td class="td-done ${t.done ? 'y' : 'n'}">${t.done ? '✓' : '○'}</td>
+        <td class="td-done ${t.done ? 'y' : 'n'}"
+            style="cursor:pointer;user-select:none"
+            onclick="toggleTask('${t.pageId}', ${t.done})"
+            title="Toggle done">${t.done ? '✓' : '○'}</td>
       </tr>
     `;
   }).join('');
 }
-async function toggleTask(pageId, currentDone) {
-  const newDone = !currentDone;
-  const task = _data.todayTasks.find(t => t.pageId === pageId);
-  if (task) {
-    task.done = newDone;
-    const allTask = _data.allTasks.find(t => t.pageId === pageId);
-    if (allTask) allTask.done = newDone;
-  }
+
+// ══════════════════════════════════════════════
+//   RECOMPUTE STATS LOCALLY (for optimistic UI)
+// ══════════════════════════════════════════════
+function recomputeStats() {
+  const tasks = _data.allTasks;
+  const gauntletTasks = tasks.filter(t => t.type === 'Gauntlet FRQ');
+  const podTasks      = tasks.filter(t => t.type === 'Packet of Doom');
+  _data.stats.gauntletDone = gauntletTasks.filter(t => t.done).length;
+  _data.stats.podDone      = podTasks.filter(t => t.done).length;
+  _data.stats.totalDone    = tasks.filter(t => t.done).length;
+  const { gauntletTotal, podTotal, daysGaunt, daysPOD } = _data.stats;
+  const gauntLeft = gauntletTotal - _data.stats.gauntletDone;
+  const podLeft   = podTotal      - _data.stats.podDone;
+  _data.stats.gauntPace = daysGaunt > 0 ? (gauntLeft / daysGaunt).toFixed(1) : gauntLeft.toString();
+  _data.stats.podPace   = daysPOD   > 0 ? (podLeft   / daysPOD  ).toFixed(1) : podLeft.toString();
+}
+
+function reRenderDashboard() {
+  document.getElementById('status-bar').innerHTML = renderStatus(_data);
+  document.getElementById('pnl-body').innerHTML   = renderPnL(_data);
+  animateBars();
   document.getElementById('today-body').innerHTML = renderToday(_data);
   bindCheckboxes();
   renderTable();
+}
+
+// ══════════════════════════════════════════════
+//   CHECKBOX INTERACTION
+// ══════════════════════════════════════════════
+async function toggleTask(pageId, currentDone) {
+  const newDone = !currentDone;
+
+  // Optimistic flip in allTasks AND todayTasks
+  const allTask   = _data.allTasks.find(t => t.pageId === pageId);
+  const todayTask = _data.todayTasks.find(t => t.pageId === pageId);
+  if (allTask)   allTask.done   = newDone;
+  if (todayTask) todayTask.done = newDone;
+
+  // Recompute stats and re-render everything immediately
+  recomputeStats();
+  reRenderDashboard();
+
   try {
     const res = await fetch('/api/notion-update', {
       method: 'PATCH',
@@ -513,15 +821,15 @@ async function toggleTask(pageId, currentDone) {
     flashRefreshDot();
   } catch (err) {
     console.error('Toggle failed:', err);
-    if (task) { task.done = currentDone; }
-    const allTask = _data.allTasks.find(t => t.pageId === pageId);
-    if (allTask) allTask.done = currentDone;
-    document.getElementById('today-body').innerHTML = renderToday(_data);
-    bindCheckboxes();
-    renderTable();
+    // Rollback
+    if (allTask)   allTask.done   = currentDone;
+    if (todayTask) todayTask.done = currentDone;
+    recomputeStats();
+    reRenderDashboard();
     alert(`⚠ Could not sync to Notion: ${err.message}`);
   }
 }
+
 function bindCheckboxes() {
   document.querySelectorAll('.pos-row').forEach(row => {
     const pageId = row.dataset.pageId;
@@ -531,6 +839,10 @@ function bindCheckboxes() {
     check.onclick = () => toggleTask(pageId, task.done);
   });
 }
+
+// ══════════════════════════════════════════════
+//   FILTERS
+// ══════════════════════════════════════════════
 document.querySelectorAll('.filter-btn[data-week]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn[data-week]').forEach(b => b.classList.remove('active'));
@@ -553,6 +865,10 @@ document.getElementById('show-done-btn').addEventListener('click', function() {
   this.classList.toggle('active', !_showDone);
   renderTable();
 });
+
+// ══════════════════════════════════════════════
+//   REFRESH DOT
+// ══════════════════════════════════════════════
 function flashRefreshDot() {
   const dot = document.getElementById('rdot');
   dot.classList.add('spin');
@@ -563,32 +879,55 @@ function setRefreshTime() {
   document.getElementById('rtime').textContent =
     `SYNCED ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} ET`;
 }
+
+// ══════════════════════════════════════════════
+//   FETCH + FULL RENDER
+// ══════════════════════════════════════════════
 async function loadData() {
   try {
     const res = await fetch('/api/notion?t=' + Date.now());
     if (!res.ok) throw new Error(`API ${res.status}`);
     _data = await res.json();
+
+    // ── Ticker ──
     const tape = document.getElementById('tape');
     const html = renderTicker(_data);
-    tape.innerHTML = html + html;
+    tape.innerHTML = html + html; // doubled for seamless loop
     tape.classList.add('running');
+    // speed: ~90px/s
     tape.style.animationDuration = (tape.scrollWidth / 2 / 90).toFixed(1) + 's';
+
+    // ── Status bar ──
     document.getElementById('status-bar').innerHTML = renderStatus(_data);
+
+    // ── P&L ──
     document.getElementById('pnl-body').innerHTML = renderPnL(_data);
     animateBars();
+
+    // ── Deadlines ──
     document.getElementById('dl-body').innerHTML = renderDeadlines(_data);
+
+    // ── Today ──
     document.getElementById('today-body').innerHTML = renderToday(_data);
     bindCheckboxes();
+
+    // ── Table ──
     renderTable();
+
     setRefreshTime();
     flashRefreshDot();
   } catch (err) {
     const msg = `<div class="skel">⚠ ${err.message}</div>`;
     document.getElementById('tape').innerHTML = `<span class="t-val d">&nbsp;⚠ ${err.message}</span>`;
-    ['pnl-body','dl-body','today-body'].forEach(id => { document.getElementById(id).innerHTML = msg; });
-    document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="skel">⚠ ${err.message}</td></tr>`;
+    ['pnl-body','dl-body','today-body'].forEach(id => {
+      document.getElementById(id).innerHTML = msg;
+    });
+    document.getElementById('table-body').innerHTML =
+      `<tr><td colspan="6" class="skel">⚠ ${err.message}</td></tr>`;
   }
 }
+
+// initial load + auto-refresh every 60s
 loadData();
 setInterval(loadData, 60_000);
 </script>
