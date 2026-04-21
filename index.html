@@ -44,9 +44,14 @@ body {
 /* ══════════════════════════════════════════════════════════
    ANIMATIONS
 ══════════════════════════════════════════════════════════ */
-@keyframes scroll  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-@keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.2} }
-@keyframes fadein  { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+@keyframes scroll        { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes blink         { 0%,100%{opacity:1} 50%{opacity:.2} }
+@keyframes fadein        { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+@keyframes cel-in        { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:none} }
+@keyframes cel-out       { from{opacity:1;transform:none} to{opacity:0;transform:scale(1.02)} }
+@keyframes cel-glow      { 0%,100%{box-shadow:inset 0 0 0 2px var(--green)} 50%{box-shadow:inset 0 0 0 2px var(--green-hi),inset 0 0 40px rgba(75,173,108,.15)} }
+@keyframes ticker-fall   { 0%{transform:translateY(-30px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+@keyframes cel-text-blink{ 0%,100%{opacity:1} 40%,60%{opacity:.4} }
 
 /* ══════════════════════════════════════════════════════════
    TICKER
@@ -294,14 +299,51 @@ body {
 .session-val.r { color: var(--red); }
 
 /* ── Velocity Log ── */
-.vel-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 8.5px; }
-.vel-label { color: var(--text-dim); font-size: 7.5px; letter-spacing: .08em; }
-.vel-val { color: var(--green); }
-.vel-val.w { color: var(--amber); }
-.vel-val.r { color: var(--red); }
-.vel-bar-row { display: flex; align-items: center; gap: 5px; }
-.vel-mini-label { color: var(--text-dim); font-size: 7px; letter-spacing: .06em; width: 28px; flex-shrink: 0; }
-.vel-mini-val   { color: var(--text-dim); font-size: 7px; width: 28px; text-align: right; flex-shrink: 0; }
+.vel-day-row   { display: flex; align-items: center; gap: 6px; }
+.vel-day-label { font-size: 7.5px; color: var(--text-dim); letter-spacing: .07em; width: 42px; flex-shrink: 0; }
+.vel-day-stat  { font-size: 7.5px; width: 28px; text-align: right; flex-shrink: 0; }
+.vel-day-stat.g { color: var(--green); }
+.vel-day-stat.w { color: var(--amber); }
+.vel-day-stat.r { color: var(--red);   }
+.vel-day-empty  { font-size: 7.5px; color: var(--border2); letter-spacing: .05em; }
+
+/* ── Celebration Overlay ── */
+.celebration-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(9,11,9,.94);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: cel-in .35s cubic-bezier(.2,0,.1,1), cel-glow 1.6s ease-in-out 3;
+  cursor: pointer; overflow: hidden;
+  border: 2px solid var(--green);
+}
+.celebration-overlay.closing { animation: cel-out .4s ease forwards; }
+.cel-eyebrow {
+  font-size: 8px; letter-spacing: .3em; color: var(--text-mid);
+  margin-bottom: 18px;
+  animation: cel-text-blink 1.4s step-end infinite;
+}
+.cel-title {
+  font-size: 52px; font-weight: 600; letter-spacing: .04em;
+  color: var(--green-hi); text-align: center; line-height: 1.1;
+  text-shadow: 0 0 40px rgba(99,199,132,.35);
+}
+.cel-sub {
+  font-size: 11px; letter-spacing: .2em; color: var(--text-mid);
+  margin-top: 14px; text-align: center;
+}
+.cel-date {
+  font-size: 8px; letter-spacing: .16em; color: var(--text-dim); margin-top: 6px;
+}
+.cel-dismiss {
+  font-size: 7px; letter-spacing: .14em; color: var(--border2);
+  margin-top: 36px;
+  animation: blink 2s step-end infinite;
+}
+.cel-piece {
+  position: absolute; top: 0; pointer-events: none;
+  animation: ticker-fall linear forwards;
+  font-weight: 600; user-select: none;
+}
 
 /* ── Time Remaining Today ── */
 .timerem-clock {
@@ -948,6 +990,7 @@ async function toggleTask(pageId, currentDone) {
   // Recompute stats and re-render everything immediately
   recomputeStats();
   reRenderDashboard();
+  if (newDone) checkCelebration();
 
   try {
     const res = await fetch('/api/notion-update', {
@@ -1015,53 +1058,44 @@ function renderNextUp() {
 }
 
 // ══════════════════════════════════════════════
-//   VELOCITY LOG
+//   VELOCITY LOG  (last 4 days)
 // ══════════════════════════════════════════════
 function renderVelocityLog() {
   if (!_data) return;
   const el = document.getElementById('velocity-body');
   if (!el) return;
-  const { stats, todayTasks } = _data;
-  const { gauntletDone, gauntletTotal, podDone, podTotal,
-          totalDone, totalTasks, daysGaunt, daysPOD, gauntPace, podPace } = stats;
-  const todayDone  = todayTasks.filter(t => t.done).length;
-  const todayTotal = todayTasks.length;
-  const todayColor = todayTotal > 0 && todayDone === todayTotal ? '' : todayTotal > 0 && todayDone === 0 ? 'r' : 'w';
-  const gPct = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
-  const pPct = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
 
-  el.innerHTML = `
-    <div class="vel-row">
-      <span class="vel-label">TODAY</span>
-      <span class="vel-val ${todayColor}">${todayDone}/${todayTotal} tasks</span>
-    </div>
-    <div class="vel-row">
-      <span class="vel-label">REMAINING</span>
-      <span class="vel-val">${totalTasks - totalDone} tasks left</span>
-    </div>
-    <div class="vel-row" style="margin-top:4px">
-      <span class="vel-label">GAUNT PACE</span>
-      <span class="vel-val w">${gauntPace} FRQ/day</span>
-    </div>
-    <div class="vel-row">
-      <span class="vel-label">POD PACE</span>
-      <span class="vel-val r">${podPace} pg/day</span>
-    </div>
-    <div class="vel-bar-row" style="margin-top:6px">
-      <span class="vel-mini-label">GAUNT</span>
-      <div class="pnl-track" style="flex:1">
-        <div class="pnl-fill w" style="width:0%" data-target="${gPct}"></div>
-      </div>
-      <span class="vel-mini-val">${gauntletDone}/${gauntletTotal}</span>
-    </div>
-    <div class="vel-bar-row">
-      <span class="vel-mini-label">POD</span>
-      <div class="pnl-track" style="flex:1">
-        <div class="pnl-fill r" style="width:0%" data-target="${pPct}"></div>
-      </div>
-      <span class="vel-mini-val">${podDone}/${podTotal}</span>
-    </div>
-  `;
+  // Build last-4-day date strings (Eastern, descending)
+  const [ty, tm, td] = _data.stats.todayEastern.split('-').map(Number);
+  const labels = ['TODAY', 'YDAY', '2D AGO', '3D AGO'];
+  const rows = labels.map((label, i) => {
+    const d = new Date(ty, tm - 1, td - i);
+    const dateStr = [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, '0'),
+      String(d.getDate()).padStart(2, '0'),
+    ].join('-');
+    const dayTasks = _data.allTasks.filter(t => t.date === dateStr);
+    return { label, dateStr, total: dayTasks.length, done: dayTasks.filter(t => t.done).length };
+  });
+
+  el.innerHTML = rows.map(({ label, total, done }) => {
+    if (!total) return `
+      <div class="vel-day-row">
+        <span class="vel-day-label">${label}</span>
+        <span class="vel-day-empty">no tasks</span>
+      </div>`;
+    const pct = Math.round(done / total * 100);
+    const c   = pct === 100 ? 'g' : pct >= 50 ? 'w' : 'r';
+    return `
+      <div class="vel-day-row">
+        <span class="vel-day-label">${label}</span>
+        <div class="pnl-track" style="flex:1">
+          <div class="pnl-fill ${c}" style="width:0%" data-target="${pct}"></div>
+        </div>
+        <span class="vel-day-stat ${c}">${done}/${total}</span>
+      </div>`;
+  }).join('');
   animateBars();
 }
 
@@ -1243,6 +1277,70 @@ function renderSession() {
     ${todayTotal ? `<div class="pnl-track" style="margin-top:5px"><div class="pnl-fill g" style="width:0%" data-target="${rate}"></div></div>` : ''}
   `;
   animateBars();
+}
+
+// ══════════════════════════════════════════════
+//   CELEBRATION
+// ══════════════════════════════════════════════
+let _celebrationShown = false;
+
+function checkCelebration() {
+  if (!_data) return;
+  const todayTasks = _data.todayTasks;
+  if (!todayTasks.length) return;
+  const todayDone = todayTasks.filter(t => t.done).length;
+
+  if (todayDone === todayTasks.length && !_celebrationShown) {
+    _celebrationShown = true;
+    showCelebration();
+  } else if (todayDone < todayTasks.length) {
+    _celebrationShown = false; // reset if something gets unchecked
+  }
+}
+
+function showCelebration() {
+  document.getElementById('celebration-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id  = 'celebration-overlay';
+  overlay.className = 'celebration-overlay';
+
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    timeZone: 'America/New_York', month: 'long', day: 'numeric', year: 'numeric',
+  }).toUpperCase();
+
+  overlay.innerHTML = `
+    <div class="cel-eyebrow">◉ MARKET UPDATE — SESSION CLOSED</div>
+    <div class="cel-title">ALL POSITIONS<br>CLOSED</div>
+    <div class="cel-sub">TRADING SESSION COMPLETE · PORTFOLIO FULLY FILED</div>
+    <div class="cel-date">${dateStr} · APUSH TRADING FLOOR</div>
+    <div class="cel-dismiss">[ CLICK ANYWHERE TO DISMISS ]</div>
+  `;
+
+  // Ticker-tape confetti
+  const symbols = ['◆', '▲', '$', '✦', '◉', '▼', '●', '▸', '※', '◈'];
+  const colors  = ['var(--green)', 'var(--green-hi)', 'var(--amber)', 'var(--text-mid)'];
+  for (let i = 0; i < 45; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'cel-piece';
+    piece.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    piece.style.left     = (Math.random() * 100) + 'vw';
+    piece.style.color    = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.fontSize = (8 + Math.random() * 14) + 'px';
+    piece.style.animationDuration = (2.5 + Math.random() * 4) + 's';
+    piece.style.animationDelay   = (Math.random() * 3) + 's';
+    overlay.appendChild(piece);
+  }
+
+  const dismiss = () => {
+    overlay.classList.add('closing');
+    setTimeout(() => overlay.remove(), 400);
+  };
+  overlay.addEventListener('click', dismiss);
+  // Auto-dismiss after 8s
+  setTimeout(() => { if (document.getElementById('celebration-overlay')) dismiss(); }, 8000);
+
+  document.body.appendChild(overlay);
 }
 
 // ══════════════════════════════════════════════
