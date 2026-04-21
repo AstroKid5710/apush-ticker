@@ -1106,18 +1106,27 @@ function renderPeriodRadar() {
   const el = document.getElementById('radar-body');
   if (!el) return;
 
-  // Parse APUSH period from tag (e.g. "P3", "Period 4", "p5", "3")
-  function getPeriod(tag) {
-    if (!tag) return null;
-    const m = tag.match(/\b([1-9])\b/);
-    return m ? parseInt(m[1]) : null;
+  // Extract period number from a task. Priority:
+  //   1. "(P4)" in task name  — most reliable (your naming convention)
+  //   2. "P4" standalone in tag field
+  //   3. "P4" standalone anywhere in task name
+  function extractPeriod(taskName, tag) {
+    // "(P4)" or "(P 4)" in task name
+    let m = taskName.match(/\(P\s*([1-9])\)/i);
+    if (m) return parseInt(m[1]);
+    // "P4" as a whole token in tag
+    if (tag) { m = tag.match(/\bP([1-9])\b/i); if (m) return parseInt(m[1]); }
+    // "P4" as a whole token in task name (e.g. "P4 KT")
+    m = taskName.match(/\bP([1-9])\b/i);
+    if (m) return parseInt(m[1]);
+    return null;
   }
 
   const periods = {};
   for (let i = 1; i <= 9; i++) periods[i] = { total: 0, done: 0 };
 
   _data.allTasks.forEach(t => {
-    const p = getPeriod(t.tag) ?? getPeriod(t.task.match(/period\s*([1-9])/i)?.[1]);
+    const p = extractPeriod(t.task, t.tag);
     if (p) { periods[p].total++; if (t.done) periods[p].done++; }
   });
 
