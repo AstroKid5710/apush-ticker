@@ -6,7 +6,7 @@
 <title>APUSH TRADING FLOOR</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23090b09'/><polyline points='3,25 8,17 14,20 21,10 29,13' fill='none' stroke='%234bad6c' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/><circle cx='29' cy='13' r='2.5' fill='%234bad6c'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════
    TOKENS
@@ -27,7 +27,7 @@
   --red-dim:   #331010;
   --text-dim:  #2e5030;
   --text-mid:  #3d6840;
-  --mono:      'IBM Plex Mono', monospace;
+  --mono:      'JetBrains Mono', monospace;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
@@ -137,8 +137,8 @@ body {
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 220px 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-columns: 185px 250px 1fr;
+  grid-template-rows: 1fr;
   gap: 1px;
   background: var(--border);
   overflow: hidden;
@@ -170,14 +170,42 @@ body {
 .panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
 /* ══════════════════════════════════════════════════════════
-   LEFT COLUMN  (P&L + Deadlines) — spans 2 rows
+   COLUMNS
 ══════════════════════════════════════════════════════════ */
 .left-col {
-  grid-row: 1 / 3;
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Today's tasks — full-height centre column */
+.today-col {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Right area: dashboard row on top, table below */
+.right-area {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.dash-row {
+  flex-shrink: 0;
+  height: 192px;
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+.dash-panel {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -367,17 +395,8 @@ body {
 .radar-val.r { color: var(--red); }
 
 /* ══════════════════════════════════════════════════════════
-   TODAY'S TASKS (top-right)
+   TODAY'S TASKS (centre column, full height)
 ══════════════════════════════════════════════════════════ */
-.today-panel {
-  grid-column: 2;
-  grid-row: 1;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  max-height: 260px;
-}
 
 /* task row */
 .pos-row {
@@ -438,11 +457,11 @@ body {
 .empty-state { font-size: 9px; color: var(--text-dim); font-style: italic; padding: 12px 0; }
 
 /* ══════════════════════════════════════════════════════════
-   FULL TASK TABLE (bottom-right)
+   FULL TASK TABLE (bottom of right area)
 ══════════════════════════════════════════════════════════ */
 .table-panel {
-  grid-column: 2;
-  grid-row: 2;
+  flex: 1;
+  min-height: 0;
   background: var(--bg);
   display: flex;
   flex-direction: column;
@@ -563,14 +582,9 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 <!-- ══════════════ MAIN GRID ══════════════ -->
 <div class="main">
 
-  <!-- LEFT COLUMN: P&L + Deadlines + Next Up + Timer + Session -->
+  <!-- COL 1: Left Sidebar — Deadlines, Next Up, Time, Timer, Session -->
   <div class="left-col">
     <div class="left-scroll">
-
-      <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
-      <div class="panel-body-left" id="pnl-body"><div class="skel">loading…</div></div>
-
-      <div class="col-divider"></div>
 
       <div class="panel-head">DEADLINE ORDER BOOK</div>
       <div class="panel-body-left" id="dl-body"><div class="skel">loading…</div></div>
@@ -582,18 +596,8 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 
       <div class="col-divider"></div>
 
-      <div class="panel-head">VELOCITY LOG</div>
-      <div class="panel-body-left" id="velocity-body"><div class="skel">loading…</div></div>
-
-      <div class="col-divider"></div>
-
       <div class="panel-head">TIME REMAINING TODAY</div>
       <div class="panel-body-left" id="timerem-body"><div class="skel">loading…</div></div>
-
-      <div class="col-divider"></div>
-
-      <div class="panel-head">PERIOD COVERAGE</div>
-      <div class="panel-body-left" id="radar-body"><div class="skel">loading…</div></div>
 
       <div class="col-divider"></div>
 
@@ -619,55 +623,77 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
     </div>
   </div>
 
-  <!-- TOP RIGHT: Today's Positions -->
-  <div class="today-panel panel">
+  <!-- COL 2: Today's Positions — full height -->
+  <div class="today-col">
     <div class="panel-head">TODAY'S POSITIONS <span class="live">◉ LIVE</span></div>
     <div class="panel-body" id="today-body">
       <div class="skel">loading…</div>
     </div>
   </div>
 
-  <!-- BOTTOM RIGHT: Full Task Table -->
-  <div class="table-panel">
-    <div class="panel-head">
-      FULL ORDER BOOK
-      <span id="table-count" style="color:var(--text-dim);font-size:7px;letter-spacing:.1em"></span>
+  <!-- COL 3: Dashboard row + Table -->
+  <div class="right-area">
+
+    <!-- Dashboard: P&L | Velocity | Period Coverage -->
+    <div class="dash-row">
+      <div class="dash-panel">
+        <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
+        <div class="panel-body-left" id="pnl-body"><div class="skel">loading…</div></div>
+      </div>
+      <div class="dash-panel">
+        <div class="panel-head">VELOCITY LOG</div>
+        <div class="panel-body-left" id="velocity-body"><div class="skel">loading…</div></div>
+      </div>
+      <div class="dash-panel">
+        <div class="panel-head">PERIOD COVERAGE</div>
+        <div class="panel-body-left" id="radar-body"><div class="skel">loading…</div></div>
+      </div>
     </div>
-    <div class="filter-bar" id="filter-bar">
-      <span class="filter-label">WEEK</span>
-      <button class="filter-btn active" data-week="ALL">ALL</button>
-      <button class="filter-btn" data-week="Week 1 — Apr 15–19">W1</button>
-      <button class="filter-btn" data-week="Week 2 — Apr 20–26">W2</button>
-      <button class="filter-btn" data-week="Week 3 — Apr 27 – May 3">W3</button>
-      <button class="filter-btn" data-week="Week 4 — Exam Week">W4</button>
-      <div class="filter-sep"></div>
-      <span class="filter-label">TYPE</span>
-      <button class="filter-btn active" data-type="ALL">ALL</button>
-      <button class="filter-btn" data-type="Gauntlet FRQ">GAUNT</button>
-      <button class="filter-btn" data-type="Packet of Doom">POD</button>
-      <button class="filter-btn" data-type="IDs / KT">IDS</button>
-      <button class="filter-btn" data-type="Review / Class">CLASS</button>
-      <button class="filter-btn" data-type="Exam / Due">DUE</button>
-      <div class="filter-sep"></div>
-      <button class="filter-btn" id="show-done-btn" data-show-done="false">HIDE DONE</button>
+
+    <!-- Full Task Table -->
+    <div class="table-panel">
+      <div class="panel-head">
+        FULL ORDER BOOK
+        <span id="table-count" style="color:var(--text-dim);font-size:7px;letter-spacing:.1em"></span>
+      </div>
+      <div class="filter-bar" id="filter-bar">
+        <span class="filter-label">WEEK</span>
+        <button class="filter-btn active" data-week="ALL">ALL</button>
+        <button class="filter-btn" data-week="Week 1 — Apr 15–19">W1</button>
+        <button class="filter-btn" data-week="Week 2 — Apr 20–26">W2</button>
+        <button class="filter-btn" data-week="Week 3 — Apr 27 – May 3">W3</button>
+        <button class="filter-btn" data-week="Week 4 — Exam Week">W4</button>
+        <div class="filter-sep"></div>
+        <span class="filter-label">TYPE</span>
+        <button class="filter-btn active" data-type="ALL">ALL</button>
+        <button class="filter-btn" data-type="Gauntlet FRQ">GAUNT</button>
+        <button class="filter-btn" data-type="Packet of Doom">POD</button>
+        <button class="filter-btn" data-type="IDs / KT">IDS</button>
+        <button class="filter-btn" data-type="Review / Class">CLASS</button>
+        <button class="filter-btn" data-type="Exam / Due">DUE</button>
+        <div class="filter-sep"></div>
+        <button class="filter-btn" id="show-done-btn" data-show-done="false">HIDE DONE</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>TASK</th>
+              <th>TYPE</th>
+              <th>SCHED</th>
+              <th>CLOSED</th>
+              <th>EST</th>
+              <th>WEEK</th>
+              <th>✓</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td colspan="7" class="skel">loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>TASK</th>
-            <th>TYPE</th>
-            <th>DATE</th>
-            <th>EST</th>
-            <th>WEEK</th>
-            <th>✓</th>
-          </tr>
-        </thead>
-        <tbody id="table-body">
-          <tr><td colspan="6" class="skel">loading…</td></tr>
-        </tbody>
-      </table>
-    </div>
+
   </div>
 </div>
 
@@ -958,7 +984,7 @@ function renderTable() {
 
   const tbody = document.getElementById('table-body');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="skel">No records match filter.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="skel">No records match filter.</td></tr>`;
     return;
   }
   tbody.innerHTML = rows.map(t => {
@@ -969,6 +995,7 @@ function renderTable() {
         <td class="td-name" title="${t.task}">${t.task}</td>
         <td class="td-type"><span class="type-pill ${c}">${l}</span></td>
         <td class="td-date">${fmtDate(t.date)}</td>
+        <td class="td-date" style="color:${t.completedOn ? 'var(--green)' : 'var(--border2)'}">${t.completedOn ? fmtDate(t.completedOn) : '—'}</td>
         <td class="td-est">${t.est || '—'}</td>
         <td class="td-week">${weekShort(t.week)}</td>
         <td class="td-done ${t.done ? 'y' : 'n'}"
@@ -1020,8 +1047,12 @@ async function toggleTask(pageId, currentDone) {
   // Optimistic flip in allTasks AND todayTasks
   const allTask   = _data.allTasks.find(t => t.pageId === pageId);
   const todayTask = _data.todayTasks.find(t => t.pageId === pageId);
-  if (allTask)   allTask.done   = newDone;
-  if (todayTask) todayTask.done = newDone;
+  // Eastern "today" for completedOn stamp
+  const _todayET = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+  if (allTask)   { allTask.done = newDone;   allTask.completedOn   = newDone ? _todayET : null; }
+  if (todayTask) { todayTask.done = newDone; todayTask.completedOn = newDone ? _todayET : null; }
 
   // Track session completions
   if (newDone) _session.completions++;
@@ -1109,16 +1140,28 @@ function renderVelocityLog() {
   const [ty, tm, td] = _data.stats.todayEastern.split('-').map(Number);
   const xLabels = ['3D', '2D', 'YDAY', 'TODAY'];
   const dayData = xLabels.map((label, i) => {
-    const offset = 3 - i; // 3,2,1,0 days ago
+    const offset = 3 - i;
     const d = new Date(ty, tm - 1, td - offset);
     const dateStr = [
       d.getFullYear(),
       String(d.getMonth() + 1).padStart(2, '0'),
       String(d.getDate()).padStart(2, '0'),
     ].join('-');
-    const tasks = _data.allTasks.filter(t => t.date === dateStr);
-    const total = tasks.length;
-    const done  = tasks.filter(t => t.done).length;
+    // Denominator: tasks scheduled for this day
+    const total = _data.allTasks.filter(t => t.date === dateStr).length;
+
+    // Numerator: tasks actually closed on this day
+    // — uses completedOn if available, falls back to scheduled date for legacy done tasks
+    let done = _data.allTasks.filter(t => {
+      if (t.completedOn) return t.completedOn === dateStr;
+      return t.done && t.date === dateStr; // legacy: no completedOn yet
+    }).length;
+
+    // TODAY: also credit in-session completions not yet reflected by API
+    if (label === 'TODAY' && total > 0) {
+      done = Math.max(done, _session.completions);
+    }
+
     return { label, total, done, pct: total > 0 ? Math.round(done / total * 100) : null };
   });
 
@@ -1128,25 +1171,25 @@ function renderVelocityLog() {
     return;
   }
 
+  // Dynamic Y ceiling — at least 100, expands if today goes over
+  const maxPct   = Math.max(100, ...validPts.map(d => d.pct));
+  const yMax     = maxPct > 100 ? Math.ceil(maxPct / 50) * 50 : 100; // round up to nearest 50
+
   // Chart geometry
   const W = 200, H = 90;
-  const pL = 22, pR = 8, pT = 12, pB = 20;
+  const pL = 26, pR = 8, pT = 12, pB = 20;
   const cW = W - pL - pR, cH = H - pT - pB;
   const n  = dayData.length - 1;
 
-  // x/y coords for each day (null pct → skip from line but keep x position)
   const pts = dayData.map((d, i) => ({
     ...d,
     x: pL + (i / n) * cW,
-    y: d.pct !== null ? pT + cH - (d.pct / 100) * cH : null,
+    y: d.pct !== null ? pT + cH - (d.pct / yMax) * cH : null,
   }));
 
-  // Trend color based on today's pct
-  const todayPct = dayData[3].pct;
   const lastValid = validPts[validPts.length - 1].pct;
-  const hex = lastValid === 100 ? '#4bad6c' : lastValid >= 50 ? '#e07b30' : '#d94040';
+  const hex = lastValid >= 100 ? '#4bad6c' : lastValid >= 50 ? '#e07b30' : '#d94040';
 
-  // Build line + area from valid consecutive points
   const plotPts = pts.filter(p => p.y !== null);
   let linePath = '', areaPath = '';
   if (plotPts.length > 1) {
@@ -1154,32 +1197,39 @@ function renderVelocityLog() {
     areaPath = `${linePath} L${plotPts[plotPts.length-1].x.toFixed(1)},${pT+cH} L${plotPts[0].x.toFixed(1)},${pT+cH} Z`;
   }
 
-  // Horizontal gridlines at 0 / 50 / 100
-  const grids = [0, 50, 100].map(v => {
-    const gy = pT + cH - (v / 100) * cH;
+  // Gridlines: always show 0/50/100; add extra if yMax > 100
+  const gridVals = [0, 50, 100];
+  if (yMax > 100) gridVals.push(yMax);
+  const grids = gridVals.map(v => {
+    const gy = pT + cH - (v / yMax) * cH;
+    const is100 = v === 100 && yMax > 100; // dashed when 100% isn't the ceiling
     return `
-      <line x1="${pL}" y1="${gy.toFixed(1)}" x2="${W-pR}" y2="${gy.toFixed(1)}" stroke="#182018" stroke-width="1"/>
-      <text x="${pL-3}" y="${(gy+3).toFixed(1)}" text-anchor="end" font-size="6" fill="#2e5030" font-family="IBM Plex Mono,monospace">${v}</text>`;
+      <line x1="${pL}" y1="${gy.toFixed(1)}" x2="${W-pR}" y2="${gy.toFixed(1)}"
+            stroke="${is100 ? '#22442c' : '#182018'}" stroke-width="1"
+            stroke-dasharray="${is100 ? '3,3' : 'none'}"/>
+      <text x="${pL-3}" y="${(gy+3).toFixed(1)}" text-anchor="end" font-size="6"
+            fill="${is100 ? '#3d6840' : '#2e5030'}"
+            font-family="JetBrains Mono,monospace">${v}</text>`;
   }).join('');
 
-  // X-axis labels
   const xlabels = pts.map(p =>
-    `<text x="${p.x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="6.5" fill="${p.label === 'TODAY' ? hex : '#2e5030'}" font-family="IBM Plex Mono,monospace" font-weight="${p.label === 'TODAY' ? '600' : '400'}">${p.label}</text>`
+    `<text x="${p.x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="6.5"
+           fill="${p.label === 'TODAY' ? hex : '#2e5030'}"
+           font-family="JetBrains Mono,monospace"
+           font-weight="${p.label === 'TODAY' ? '700' : '400'}">${p.label}</text>`
   ).join('');
 
-  // Dots + value labels
   const dots = plotPts.map(p => {
     const isToday = p.label === 'TODAY';
-    const labelY  = (p.y - 6).toFixed(1);
+    const dc = p.pct >= 100 ? '#4bad6c' : p.pct >= 50 ? '#e07b30' : '#d94040';
     return `
       <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isToday ? 3.5 : 2}"
-              fill="${isToday ? hex : '#090b09'}" stroke="${hex}" stroke-width="1.5"/>
-      <text x="${p.x.toFixed(1)}" y="${labelY}" text-anchor="middle"
-            font-size="${isToday ? 8 : 7}" fill="${hex}"
-            font-family="IBM Plex Mono,monospace" font-weight="600">${p.pct}%</text>`;
+              fill="${isToday ? dc : '#090b09'}" stroke="${dc}" stroke-width="1.5"/>
+      <text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" text-anchor="middle"
+            font-size="${isToday ? 8 : 7}" fill="${dc}"
+            font-family="JetBrains Mono,monospace" font-weight="700">${p.pct}%</text>`;
   }).join('');
 
-  // "Current price" dashed line from last point to right edge
   const last = plotPts[plotPts.length - 1];
   const dashLine = last
     ? `<line x1="${last.x.toFixed(1)}" y1="${last.y.toFixed(1)}" x2="${W-pR}" y2="${last.y.toFixed(1)}"
