@@ -550,6 +550,98 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .skel { color: var(--text-dim); font-size: 9px; font-style: italic; padding: 16px; }
 
 /* ══════════════════════════════════════════════════════════
+   MOBILE  (≤ 700px)  — single-column, task-first layout
+══════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  /* Allow full-page scroll */
+  html, body { height: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Sticky top strip */
+  .ticker-wrap { position: sticky; top: 0; z-index: 20; }
+  .status-bar  { position: sticky; top: 34px; z-index: 19;
+                 overflow-x: auto; flex-wrap: nowrap; gap: 14px; }
+
+  /* Flatten 3-col grid into single column */
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    background: var(--border);
+    gap: 1px;
+  }
+
+  /* ── Order: today → dashboard → table → sidebar ── */
+  .today-col  { order: 1; width: 100%; height: auto; }
+  .right-area { order: 2; height: auto; overflow: visible; }
+  .left-col   { order: 3; width: 100%; height: auto; overflow: visible; }
+
+  /* Let panel bodies grow naturally */
+  .panel-body { flex: none; overflow-y: visible; max-height: none; min-height: 0; }
+  .left-scroll { flex: none; overflow-y: visible; height: auto; }
+
+  /* Dashboard row: show only P&L, stack it */
+  .dash-row {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    background: var(--bg);
+  }
+  /* Hide velocity chart and period coverage on mobile */
+  .dash-panel:nth-child(2),
+  .dash-panel:nth-child(3) { display: none; }
+
+  /* Hide desktop-only sidebar sections */
+  .mob-hide { display: none; }
+
+  /* ── Today's tasks — big touch targets ── */
+  .pos-row {
+    grid-template-columns: 36px 1fr auto;
+    padding: 11px 4px;
+    min-height: 52px;
+    gap: 8px;
+  }
+  /* Hide type pill and trailing icon to save width */
+  .pos-tag { display: none; }
+  .pos-row > span:last-child { display: none; }
+
+  /* Bigger checkbox */
+  .pos-check {
+    width: 24px; height: 24px;
+    border-radius: 3px;
+  }
+  .pos-check.checked::after { font-size: 14px; }
+
+  .pos-name  { font-size: 10.5px; }
+  .pos-est   { font-size: 9px; }
+
+  /* ── Full task table — trimmed to 3 cols ── */
+  .table-panel { height: auto; overflow: visible; min-height: 200px; }
+  .table-scroll { overflow-x: auto; height: auto; overflow-y: visible; }
+
+  /* Hide SCHED, CLOSED, EST, WEEK columns — keep TASK, TYPE, ✓ */
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5),
+  th:nth-child(6), td:nth-child(6) { display: none; }
+
+  /* Fat tap target for table checkbox */
+  .td-done { padding: 14px 16px; min-width: 48px; font-size: 15px; }
+
+  td, th { padding: 7px 8px; }
+  table  { font-size: 10px; }
+
+  /* ── Filter bar — allow wrap ── */
+  .filter-bar { flex-wrap: wrap; gap: 5px; }
+  /* Hide week filters on mobile (save space) */
+  .filter-btn[data-week]:not([data-week="ALL"]) { display: none; }
+
+  /* ── Misc ── */
+  .refresh-dot { display: none; }
+  .panel-head  { font-size: 8px; padding: 7px 10px 6px; }
+}
+
+/* ══════════════════════════════════════════════════════════
    REFRESH INDICATOR (bottom-right corner)
 ══════════════════════════════════════════════════════════ */
 .refresh-dot {
@@ -594,31 +686,34 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
       <div class="panel-head">NEXT UP</div>
       <div class="panel-body-left" id="nextup-body"><div class="skel">loading…</div></div>
 
-      <div class="col-divider"></div>
+      <div class="mob-hide">
+        <div class="col-divider"></div>
+        <div class="panel-head">TIME REMAINING TODAY</div>
+        <div class="panel-body-left" id="timerem-body"><div class="skel">loading…</div></div>
+      </div>
 
-      <div class="panel-head">TIME REMAINING TODAY</div>
-      <div class="panel-body-left" id="timerem-body"><div class="skel">loading…</div></div>
-
-      <div class="col-divider"></div>
-
-      <div class="panel-head">PRACTICE TIMER</div>
-      <div class="panel-body-left" id="timer-body">
-        <div class="timer-presets">
-          <button class="filter-btn timer-preset active" onclick="setTimerPreset(25,this)">25M</button>
-          <button class="filter-btn timer-preset" onclick="setTimerPreset(15,this)">15M</button>
-          <button class="filter-btn timer-preset" onclick="setTimerPreset(5,this)">5M</button>
-        </div>
-        <div id="timer-display" class="timer-display">25:00</div>
-        <div class="timer-controls">
-          <button class="timer-btn g" id="timer-toggle-btn" onclick="toggleTimer()">START</button>
-          <button class="timer-btn d" onclick="resetTimer()">RESET</button>
+      <div class="mob-hide">
+        <div class="col-divider"></div>
+        <div class="panel-head">PRACTICE TIMER</div>
+        <div class="panel-body-left" id="timer-body">
+          <div class="timer-presets">
+            <button class="filter-btn timer-preset active" onclick="setTimerPreset(25,this)">25M</button>
+            <button class="filter-btn timer-preset" onclick="setTimerPreset(15,this)">15M</button>
+            <button class="filter-btn timer-preset" onclick="setTimerPreset(5,this)">5M</button>
+          </div>
+          <div id="timer-display" class="timer-display">25:00</div>
+          <div class="timer-controls">
+            <button class="timer-btn g" id="timer-toggle-btn" onclick="toggleTimer()">START</button>
+            <button class="timer-btn d" onclick="resetTimer()">RESET</button>
+          </div>
         </div>
       </div>
 
-      <div class="col-divider"></div>
-
-      <div class="panel-head">SESSION LOG</div>
-      <div class="panel-body-left" id="session-body"><div class="skel">loading…</div></div>
+      <div class="mob-hide">
+        <div class="col-divider"></div>
+        <div class="panel-head">SESSION LOG</div>
+        <div class="panel-body-left" id="session-body"><div class="skel">loading…</div></div>
+      </div>
 
     </div>
   </div>
