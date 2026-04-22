@@ -721,6 +721,70 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .refresh-dot .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 .refresh-dot .dot.spin { animation: blink .6s step-end 3; }
 
+/* ── Close Session Button ── */
+.close-session-wrap {
+  flex-shrink: 0;
+  padding: 10px 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.close-session-btn {
+  width: 100%;
+  font-family: var(--mono); font-size: 8px; letter-spacing: .18em;
+  padding: 7px 0;
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+}
+.close-session-btn:hover { color: var(--amber); border-color: var(--amber-dim); background: rgba(224,123,48,.04); }
+
+/* ── Market Closed Overlay ── */
+.mktclose-overlay {
+  position: fixed; inset: 0; z-index: 180;
+  background: rgba(9,11,9,.97);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--border2);
+  overflow: hidden; cursor: pointer;
+}
+.mktclose-overlay.open { display: flex; animation: cel-in .3s ease; }
+.mktclose-overlay.closing { animation: cel-out .35s ease forwards; }
+.mktclose-eyebrow {
+  font-size: 7.5px; letter-spacing: .28em; color: var(--text-dim);
+  margin-bottom: 16px; animation: cel-text-blink 2s step-end infinite;
+}
+.mktclose-title {
+  font-size: 48px; font-weight: 600; letter-spacing: .04em;
+  color: var(--amber); text-align: center; line-height: 1.1;
+  text-shadow: 0 0 40px rgba(224,123,48,.25);
+}
+.mktclose-sub {
+  font-size: 10px; letter-spacing: .18em; color: var(--text-mid);
+  margin-top: 12px; text-align: center;
+}
+.mktclose-stats {
+  margin-top: 28px;
+  display: flex; gap: 32px; align-items: flex-start;
+}
+.mktclose-stat { text-align: center; }
+.mktclose-stat-val { font-size: 28px; font-weight: 600; color: var(--green); }
+.mktclose-stat-val.w { color: var(--amber); }
+.mktclose-stat-label { font-size: 6.5px; letter-spacing: .16em; color: var(--text-dim); margin-top: 3px; }
+.mktclose-divider { width: 1px; background: var(--border); height: 48px; align-self: center; }
+.mktclose-tomorrow {
+  margin-top: 30px; text-align: center;
+  font-size: 7.5px; letter-spacing: .1em; color: var(--text-dim);
+  max-width: 380px; line-height: 1.9;
+}
+.mktclose-tomorrow-head {
+  font-size: 7px; letter-spacing: .22em; color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.mktclose-tmr-task { color: var(--text-mid); }
+.mktclose-dismiss {
+  font-size: 7px; letter-spacing: .14em; color: var(--border2);
+  margin-top: 32px; animation: blink 2s step-end infinite;
+}
+
 /* ── Date Picker Modal ── */
 .datepick-overlay {
   position: fixed; inset: 0; z-index: 150;
@@ -837,6 +901,9 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
     <div class="panel-body" id="today-body">
       <div class="skel">loading…</div>
     </div>
+    <div class="close-session-wrap">
+      <button class="close-session-btn" onclick="closeSession()">◼ CLOSE SESSION FOR TODAY</button>
+    </div>
   </div>
 
   <!-- COL 3: Dashboard row + Table -->
@@ -909,6 +976,16 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 <div class="refresh-dot">
   <div class="dot" id="rdot"></div>
   <span id="rtime">—</span>
+</div>
+
+<!-- ══════════════ MARKET CLOSED OVERLAY ══════════════ -->
+<div class="mktclose-overlay" id="mktclose-overlay" onclick="dismissMarketClose()">
+  <div class="mktclose-eyebrow">◉ END OF SESSION REPORT</div>
+  <div class="mktclose-title">MARKET<br>CLOSED</div>
+  <div class="mktclose-sub" id="mktclose-sub"></div>
+  <div class="mktclose-stats" id="mktclose-stats"></div>
+  <div class="mktclose-tomorrow" id="mktclose-tomorrow"></div>
+  <div class="mktclose-dismiss">[ CLICK ANYWHERE TO DISMISS ]</div>
 </div>
 
 <!-- ══════════════ DATE PICKER MODAL ══════════════ -->
@@ -1886,6 +1963,170 @@ function renderSession() {
     ${todayTotal ? `<div class="pnl-track" style="margin-top:5px"><div class="pnl-fill g" style="width:0%" data-target="${rate}"></div></div>` : ''}
   `;
   animateBars();
+}
+
+// ══════════════════════════════════════════════
+//   CLOSE SESSION
+// ══════════════════════════════════════════════
+function closeSession() {
+  if (!_data) return;
+
+  const today      = _data.stats.todayEastern;
+  const todayTasks = _data.todayTasks;
+  const todayDone  = todayTasks.filter(t => t.done).length;
+  const todayTotal = todayTasks.length;
+  const remaining  = todayTotal - todayDone;
+
+  // Overdue: undone tasks scheduled BEFORE today
+  const overdue = _data.allTasks.filter(t => !t.done && t.date && t.date < today);
+
+  // Sub-headline
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric',
+  }).toUpperCase();
+  document.getElementById('mktclose-sub').textContent = dateStr + ' · SESSION COMPLETE';
+
+  // Stats row — 4 columns if there are overdue tasks, 3 if not
+  const pct = todayTotal ? Math.round(todayDone / todayTotal * 100) : 100;
+  const overdueBlock = overdue.length ? `
+    <div class="mktclose-divider"></div>
+    <div class="mktclose-stat">
+      <div class="mktclose-stat-val" style="color:var(--red)">${overdue.length}</div>
+      <div class="mktclose-stat-label">OVERDUE</div>
+    </div>` : '';
+
+  document.getElementById('mktclose-stats').innerHTML = `
+    <div class="mktclose-stat">
+      <div class="mktclose-stat-val">${todayDone}</div>
+      <div class="mktclose-stat-label">CLOSED TODAY</div>
+    </div>
+    <div class="mktclose-divider"></div>
+    <div class="mktclose-stat">
+      <div class="mktclose-stat-val ${remaining > 0 ? 'w' : ''}">${remaining}</div>
+      <div class="mktclose-stat-label">CARRIED FORWARD</div>
+    </div>
+    ${overdueBlock}
+    <div class="mktclose-divider"></div>
+    <div class="mktclose-stat">
+      <div class="mktclose-stat-val ${pct < 80 ? 'w' : ''}">${pct}%</div>
+      <div class="mktclose-stat-label">TODAY WIN RATE</div>
+    </div>
+  `;
+
+  // Up next preview — upcoming undone tasks (future dates only)
+  const upcoming = _data.allTasks
+    .filter(t => !t.done && t.date && t.date > today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3);
+
+  // Overdue preview — show up to 2
+  const overduePreview = overdue
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 2);
+
+  let previewHtml = '';
+  if (overduePreview.length) {
+    previewHtml += `<div class="mktclose-tomorrow-head" style="color:var(--red)">OVERDUE</div>
+      ${overduePreview.map(t => `<div class="mktclose-tmr-task" style="color:var(--red);opacity:.8">▸ ${t.task}</div>`).join('')}
+      <div style="height:10px"></div>`;
+  }
+  if (upcoming.length) {
+    previewHtml += `<div class="mktclose-tomorrow-head">UP NEXT</div>
+      ${upcoming.map(t => `<div class="mktclose-tmr-task">▸ ${t.task}</div>`).join('')}`;
+  }
+  if (!overduePreview.length && !upcoming.length) {
+    previewHtml = `<div class="mktclose-tomorrow-head">NO REMAINING POSITIONS</div>`;
+  }
+
+  // ── Closing message ──────────────────────────────────────────────────────
+  const hourET    = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })).getHours();
+  const isLate    = hourET >= 22 || hourET < 4;
+  const isMidnight = hourET >= 0 && hourET < 4;
+  const pick      = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  let msg;
+
+  // Overdue backlog takes priority in the messaging
+  if (overdue.length >= 3) {
+    // Significant backlog
+    msg = isMidnight ? pick([
+      `${overdue.length} overdue positions and you're still up. Close the laptop.`,
+      `Backlog of ${overdue.length}. You can't fix it tonight — rest and attack it tomorrow.`,
+      'Past midnight with a backlog. Sleep is the move right now.',
+    ]) : isLate ? pick([
+      `${overdue.length} overdue — not tonight. Come back fresh tomorrow.`,
+      `The backlog will be there tomorrow. You won't solve it at this hour.`,
+      `${overdue.length} behind schedule. A rested session tomorrow is worth more than grinding right now.`,
+    ]) : pick([
+      `${overdue.length} overdue positions — plan to tackle those first tomorrow.`,
+      `Backlog of ${overdue.length}. Worth front-loading those in your next session.`,
+      `${overdue.length} behind. Not a crisis — just means tomorrow's session matters more.`,
+    ]);
+  } else if (overdue.length > 0) {
+    // Small overdue
+    msg = isLate ? pick([
+      `${overdue.length} overdue position${overdue.length > 1 ? 's' : ''} — deal with it tomorrow, not tonight.`,
+      `A little behind, but it's late. Rest beats grinding right now.`,
+      `${overdue.length} carrying over from before today. Tomorrow, first thing.`,
+    ]) : pick([
+      `${overdue.length} overdue — try to knock those out first tomorrow.`,
+      `Small backlog of ${overdue.length}. Manageable. Prioritize them next session.`,
+      `${overdue.length} behind from before today. Flag them for tomorrow's open.`,
+    ]);
+  } else if (remaining === 0) {
+    // Perfect day, no overdue
+    msg = pick([
+      'Full position closed. Rest up — you earned it.',
+      'All positions filed. Clean books tonight.',
+      'Perfect session. Markets are settled — so are you.',
+      'Everything\'s closed out. Go get some sleep.',
+    ]);
+  } else if (pct >= 80) {
+    msg = isLate ? pick([
+      `${remaining} left — not worth losing sleep over. Close the books.`,
+      `Almost there. Those last ${remaining} will keep until tomorrow.`,
+      `Strong session. Don't let ${remaining} task${remaining > 1 ? 's' : ''} keep you up.`,
+    ]) : pick([
+      `Solid session. The last ${remaining} can wait.`,
+      `Nearly there — ${remaining} carried forward. That's a win.`,
+      'Strong close. The stragglers will still be there tomorrow.',
+    ]);
+  } else if (pct >= 50) {
+    msg = isLate ? pick([
+      'More than half filed. It\'s late — the rest carries over.',
+      'Good progress. Close the books and get some rest.',
+      `${todayDone} closed is a real number. The rest can wait.`,
+    ]) : pick([
+      'More than halfway through. Solid work today.',
+      'Good progress — the rest will still be there tomorrow.',
+      'Decent session. Tomorrow\'s a new trading day.',
+    ]);
+  } else {
+    msg = isMidnight ? pick([
+      'It\'s past midnight. Close the books — sleep is a study tool too.',
+      'Stop. Rest. The exam doesn\'t care what time you finally slept.',
+      'Past midnight. Whatever\'s left carries. Close the laptop.',
+    ]) : isLate ? pick([
+      'It\'s late. The tasks don\'t care what time you stop.',
+      'Rough session, but it\'s getting late. Reset tomorrow.',
+      'Close the books. A rested brain tomorrow beats a tired one tonight.',
+    ]) : pick([
+      'Markets have bad days too. Reset tomorrow.',
+      'Not every session closes clean. Rest, come back stronger.',
+      'Rough day — it happens. Close out and reset.',
+    ]);
+  }
+
+  document.getElementById('mktclose-tomorrow').innerHTML =
+    `<div style="margin-bottom:14px;color:var(--amber);font-size:9px;letter-spacing:.06em;max-width:360px;text-align:center;line-height:1.6">${msg}</div>${previewHtml}`;
+
+  document.getElementById('mktclose-overlay').classList.add('open');
+}
+
+function dismissMarketClose() {
+  const el = document.getElementById('mktclose-overlay');
+  el.classList.add('closing');
+  setTimeout(() => { el.classList.remove('open', 'closing'); }, 350);
 }
 
 // ══════════════════════════════════════════════
