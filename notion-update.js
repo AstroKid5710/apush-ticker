@@ -17,31 +17,44 @@ export default async function handler(req, res) {
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
 
-  try {
-    const r = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+  const patchNotion = (properties) =>
+    fetch(`https://api.notion.com/v1/pages/${pageId}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${NOTION_TOKEN}`,
         'Notion-Version': '2022-06-28',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        properties: {
-          Done:           { checkbox: Boolean(done) },
-          'Completed On': done
-            ? { date: { start: todayEastern } }
-            : { date: null },
-        },
-      }),
+      body: JSON.stringify({ properties }),
     });
 
+  try {
+    // First attempt: update Done + Completed On together
+    let r = await patchNotion({
+      Done:           { checkbox: Boolean(done) },
+      'Completed On': done ? { date: { start: todayEastern } } : { date: null },
+    });
+
+    // Fallback: if Completed On doesn't exist in the DB yet, update only Done
+    // so task toggling still works while the user adds the property to Notion.
     if (!r.ok) {
-      const e = await r.json();
-      return res.status(r.status).json({ error: e.message ?? 'Notion PATCH failed' });
+      r = await patchNotion({ Done: { checkbox: Boolean(done) } });
+      if (!r.ok) {
+        const e = await r.json();
+        return res.status(r.status).json({ error: e.message ?? 'Notion PATCH failed' });
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json({
+        success: true, pageId, done: Boolean(done), completedOn: null,
+        note: 'Add a Date property named "Completed On" to your Notion database to enable date tracking.',
+      });
     }
 
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ success: true, pageId, done: Boolean(done), completedOn: done ? todayEastern : null });
+    return res.status(200).json({
+      success: true, pageId, done: Boolean(done),
+      completedOn: done ? todayEastern : null,
+    });
   } catch (err) {
     console.error('notion-update PATCH error:', err);
     return res.status(500).json({ error: err.message });

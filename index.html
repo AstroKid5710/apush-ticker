@@ -337,6 +337,75 @@ body {
 .vel-day-stat.r { color: var(--red);   }
 .vel-day-empty  { font-size: 7.5px; color: var(--border2); letter-spacing: .05em; }
 
+/* ── Exam Countdown ── */
+.cdown-wrap   { text-align: center; padding: 10px 6px 12px; }
+.cdown-eyebrow{ font-size: 6.5px; letter-spacing: .22em; color: var(--text-dim); margin-bottom: 8px; }
+.cdown-days   { font-size: 42px; font-weight: 600; letter-spacing: .02em; line-height: 1; }
+.cdown-dhm    { font-size: 12px; font-weight: 400; letter-spacing: .1em; margin-top: 3px; opacity: .85; }
+.cdown-units  { display: flex; justify-content: center; gap: 0; font-size: 6px; color: var(--text-dim); letter-spacing: .12em; margin-top: 1px; }
+.cdown-u      { text-align: center; }
+.cdown-sub    { font-size: 7px; letter-spacing: .1em; color: var(--text-dim); margin-top: 7px; }
+
+/* ── Streak badge ── */
+.sb-streak    { color: var(--green); font-weight: 600; }
+
+/* ── Practice launch button ── */
+.sb-practice  {
+  margin-left: auto; flex-shrink: 0;
+  font-family: var(--mono); font-size: 7px; letter-spacing: .15em;
+  color: var(--text-dim); border: 1px solid var(--border2);
+  padding: 2px 9px; background: transparent; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.sb-practice:hover { color: var(--amber); border-color: var(--amber-dim); }
+
+/* ── Essay Practice Modal ── */
+.practice-modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(9,11,9,.96);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--border2);
+  overflow: hidden;
+}
+.practice-modal.open { display: flex; animation: cel-in .25s ease; }
+.practice-close {
+  position: absolute; top: 14px; right: 16px;
+  font-family: var(--mono); font-size: 7.5px; letter-spacing: .14em;
+  color: var(--text-dim); border: 1px solid var(--border);
+  padding: 3px 10px; background: transparent; cursor: pointer;
+}
+.practice-close:hover { color: var(--red); border-color: var(--red-dim); }
+.practice-eyebrow { font-size: 7.5px; letter-spacing: .24em; color: var(--text-dim); margin-bottom: 18px; }
+.practice-modes { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.pm-btn {
+  font-family: var(--mono); font-size: 8px; letter-spacing: .12em;
+  padding: 5px 14px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  transition: all .15s;
+}
+.pm-btn:hover  { color: var(--amber); border-color: var(--amber-dim); }
+.pm-btn.active { color: var(--amber); border-color: var(--amber); background: var(--amber-dim); }
+.practice-mode-name { font-size: 10px; letter-spacing: .2em; color: var(--amber); font-weight: 600; margin-bottom: 4px; }
+.practice-display {
+  font-size: 80px; font-weight: 600; letter-spacing: .04em;
+  color: var(--green); font-family: var(--mono); margin: 16px 0;
+  transition: color .3s; min-width: 320px; text-align: center;
+}
+.practice-display.running { color: var(--green-hi); }
+.practice-display.warning { color: var(--amber); }
+.practice-display.done    { color: var(--red); animation: blink .8s step-end 8; }
+.practice-prompt { font-size: 8px; letter-spacing: .07em; color: var(--text-mid); max-width: 420px; text-align: center; line-height: 1.7; margin-bottom: 20px; }
+.practice-controls { display: flex; gap: 8px; }
+.pc-btn {
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .16em;
+  padding: 8px 28px; border: 1px solid currentColor;
+  background: transparent; cursor: pointer; transition: background .15s;
+}
+.pc-btn.g { color: var(--green); } .pc-btn.g:hover { background: var(--green-dim); }
+.pc-btn.d { color: var(--text-dim); border-color: var(--border); } .pc-btn.d:hover { background: var(--surface); }
+.practice-sessions { font-size: 7.5px; color: var(--text-dim); margin-top: 22px; letter-spacing: .1em; }
+
 /* ── Celebration Overlay ── */
 .celebration-overlay {
   position: fixed; inset: 0; z-index: 200;
@@ -678,6 +747,12 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   <div class="left-col">
     <div class="left-scroll">
 
+      <!-- Exam Countdown -->
+      <div class="panel-head" style="color:var(--amber)">EXAM COUNTDOWN</div>
+      <div id="cdown-wrap" class="cdown-wrap"><div class="skel">loading…</div></div>
+
+      <div class="col-divider"></div>
+
       <div class="panel-head">DEADLINE ORDER BOOK</div>
       <div class="panel-body-left" id="dl-body"><div class="skel">loading…</div></div>
 
@@ -796,6 +871,26 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 <div class="refresh-dot">
   <div class="dot" id="rdot"></div>
   <span id="rtime">—</span>
+</div>
+
+<!-- ══════════════ ESSAY PRACTICE MODAL ══════════════ -->
+<div class="practice-modal" id="practice-modal">
+  <button class="practice-close" onclick="closePracticeModal()">✕ CLOSE</button>
+  <div class="practice-eyebrow">◉ ESSAY PRACTICE TERMINAL</div>
+  <div class="practice-modes">
+    <button class="pm-btn active" onclick="setPracticeMode('FRQ', 15, this)">FRQ<br><span style="font-size:6.5px;letter-spacing:.12em;opacity:.7">15 MIN</span></button>
+    <button class="pm-btn" onclick="setPracticeMode('2×SAQ', 40, this)">2×SAQ<br><span style="font-size:6.5px;letter-spacing:.12em;opacity:.7">40 MIN</span></button>
+    <button class="pm-btn" onclick="setPracticeMode('DBQ', 60, this)">DBQ<br><span style="font-size:6.5px;letter-spacing:.12em;opacity:.7">60 MIN</span></button>
+    <button class="pm-btn" onclick="setPracticeMode('LEQ', 60, this)">LEQ<br><span style="font-size:6.5px;letter-spacing:.12em;opacity:.7">60 MIN</span></button>
+  </div>
+  <div class="practice-mode-name" id="pm-name">FRQ</div>
+  <div class="practice-display" id="pm-display">15:00</div>
+  <div class="practice-prompt" id="pm-prompt">15 minutes · Write one Free Response Question. Focus on thesis, evidence, and argument complexity.</div>
+  <div class="practice-controls">
+    <button class="pc-btn g" id="pm-toggle" onclick="togglePractice()">START</button>
+    <button class="pc-btn d" onclick="resetPractice()">RESET</button>
+  </div>
+  <div class="practice-sessions" id="pm-sessions">0 SESSIONS COMPLETED</div>
 </div>
 
 <script>
@@ -935,6 +1030,30 @@ function renderTicker({ stats, todayTasks }) {
 }
 
 // ══════════════════════════════════════════════
+//   STREAK COUNTER
+// ══════════════════════════════════════════════
+function computeStreak() {
+  if (!_data) return 0;
+  const byDate = {};
+  _data.allTasks.forEach(t => {
+    if (!t.date) return;
+    if (!byDate[t.date]) byDate[t.date] = { total: 0, done: 0 };
+    byDate[t.date].total++;
+    if (t.done) byDate[t.date].done++;
+  });
+  // Sorted descending, only past/today dates that have tasks
+  const dates = Object.keys(byDate)
+    .filter(d => d <= _data.stats.todayEastern && byDate[d].total > 0)
+    .sort((a, b) => b.localeCompare(a));
+  let streak = 0;
+  for (const d of dates) {
+    if (byDate[d].done === byDate[d].total) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ══════════════════════════════════════════════
 //   RENDER STATUS BAR
 // ══════════════════════════════════════════════
 function renderStatus({ stats }) {
@@ -943,6 +1062,10 @@ function renderStatus({ stats }) {
   const gauntPct = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
   const podPct   = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
   const totPct   = totalTasks    ? Math.round(totalDone    / totalTasks    * 100) : 0;
+  const streak   = computeStreak();
+  const streakHtml = streak >= 2
+    ? `<div class="sb"><div class="dot"></div><span>STREAK</span><span class="val sb-streak">${streak}D ▲</span></div>`
+    : '';
   return `
     <div class="sb"><div class="dot"></div><span>MARKETS OPEN</span></div>
     <div class="sb w"><div class="dot"></div><span>GAUNTLET</span><span class="val">${gauntletDone}/${gauntletTotal} · ${gauntPct}%</span></div>
@@ -950,6 +1073,8 @@ function renderStatus({ stats }) {
     <div class="sb r"><div class="dot"></div><span>EXAM</span><span class="val">T–${daysExam}D</span></div>
     <div class="sb w"><div class="dot"></div><span>PACE</span><span class="val">${gauntPace} FRQ/d · ${podPace} pg/d</span></div>
     <div class="sb"><div class="dot"></div><span>PORTFOLIO</span><span class="val">${totPct}%</span></div>
+    ${streakHtml}
+    <button class="sb-practice" onclick="openPracticeModal()">◉ ESSAY PRACTICE</button>
   `;
 }
 
@@ -1090,7 +1215,7 @@ function renderTable() {
         <td class="td-name" title="${t.task}">${t.task}</td>
         <td class="td-type"><span class="type-pill ${c}">${l}</span></td>
         <td class="td-date">${fmtDate(t.date)}</td>
-        <td class="td-date" style="color:${t.completedOn ? 'var(--green)' : 'var(--border2)'}">${t.completedOn ? fmtDate(t.completedOn) : '—'}</td>
+        <td class="td-date" style="color:${t.completedOn ? 'var(--green)' : 'var(--text-dim)'}">${t.completedOn ? fmtDate(t.completedOn) : '—'}</td>
         <td class="td-est">${t.est || '—'}</td>
         <td class="td-week">${weekShort(t.week)}</td>
         <td class="td-done ${t.done ? 'y' : 'n'}"
@@ -1440,6 +1565,137 @@ function renderPeriodRadar() {
 }
 
 // ══════════════════════════════════════════════
+//   EXAM COUNTDOWN
+// ══════════════════════════════════════════════
+function renderExamCountdown() {
+  const el = document.getElementById('cdown-wrap');
+  if (!el) return;
+  const now      = new Date();
+  const examDate = new Date('2026-05-08T09:00:00-04:00'); // 9am ET, May 8
+  const diff     = examDate - now;
+
+  if (diff <= 0) {
+    el.innerHTML = `
+      <div class="cdown-eyebrow">APUSH EXAM · MAY 8</div>
+      <div class="cdown-days" style="color:var(--amber)">EXAM</div>
+      <div class="cdown-sub">TODAY · FINAL SETTLEMENT</div>`;
+    return;
+  }
+
+  const totalSec = Math.floor(diff / 1000);
+  const days     = Math.floor(totalSec / 86400);
+  const hours    = Math.floor((totalSec % 86400) / 3600);
+  const mins     = Math.floor((totalSec % 3600) / 60);
+
+  const color = days < 4 ? 'var(--red)' : days < 10 ? 'var(--amber)' : 'var(--green)';
+  const glow  = days < 4 ? 'rgba(217,64,64,.25)' : days < 10 ? 'rgba(224,123,48,.2)' : 'rgba(75,173,108,.15)';
+
+  el.innerHTML = `
+    <div class="cdown-eyebrow">APUSH EXAM · MAY 8</div>
+    <div class="cdown-days" style="color:${color};text-shadow:0 0 28px ${glow}">${days}</div>
+    <div class="cdown-dhm" style="color:${color}">${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m</div>
+    <div class="cdown-units">
+      <span class="cdown-u" style="width:50px">DAYS</span>
+      <span class="cdown-u" style="width:60px">HH MM</span>
+    </div>
+    <div class="cdown-sub">D–${days} · FINAL SETTLEMENT</div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//   ESSAY PRACTICE MODAL
+// ══════════════════════════════════════════════
+const _practice = {
+  mode: 'FRQ', minutes: 15,
+  total: 15 * 60, remaining: 15 * 60,
+  running: false, interval: null, sessions: 0,
+};
+const _practicePrompts = {
+  'FRQ':   '15 min · Write one Free Response Question. Focus on thesis, evidence, and argument complexity.',
+  '2×SAQ': '40 min · Write two Short Answer Questions (~20 min each). No thesis or introduction required.',
+  'DBQ':   '60 min · Document Based Question. Spend 15 min planning, 45 min writing. Cite at least 6 of 7 docs.',
+  'LEQ':   '60 min · Long Essay Question. Choose your prompt. Thesis, contextualization, 2 HAPPs, complexity.',
+};
+
+function openPracticeModal() {
+  document.getElementById('practice-modal').classList.add('open');
+  updatePracticeDisplay();
+}
+
+function closePracticeModal() {
+  clearInterval(_practice.interval);
+  _practice.running = false;
+  document.getElementById('practice-modal').classList.remove('open');
+}
+
+function setPracticeMode(mode, minutes, btn) {
+  document.querySelectorAll('.pm-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  _practice.mode    = mode;
+  _practice.minutes = minutes;
+  _practice.total   = minutes * 60;
+  document.getElementById('pm-name').textContent   = mode;
+  document.getElementById('pm-prompt').textContent = _practicePrompts[mode] ?? '';
+  resetPractice();
+}
+
+function togglePractice() {
+  const btn  = document.getElementById('pm-toggle');
+  const disp = document.getElementById('pm-display');
+  if (_practice.running) {
+    clearInterval(_practice.interval);
+    _practice.running = false;
+    if (btn)  btn.textContent = 'START';
+    if (disp) disp.classList.remove('running');
+  } else {
+    if (_practice.remaining <= 0) _practice.remaining = _practice.total;
+    _practice.running = true;
+    if (btn)  btn.textContent = 'PAUSE';
+    if (disp) { disp.classList.add('running'); disp.classList.remove('done', 'warning'); }
+    _practice.interval = setInterval(() => {
+      _practice.remaining--;
+      updatePracticeDisplay();
+      if (_practice.remaining <= 0) {
+        clearInterval(_practice.interval);
+        _practice.running = false;
+        _practice.sessions++;
+        const b = document.getElementById('pm-toggle');
+        const d = document.getElementById('pm-display');
+        if (b) b.textContent = 'START';
+        if (d) { d.classList.remove('running', 'warning'); d.classList.add('done'); }
+        const s = _practice.sessions;
+        document.getElementById('pm-sessions').textContent =
+          `${s} SESSION${s !== 1 ? 'S' : ''} COMPLETED`;
+      }
+    }, 1000);
+  }
+}
+
+function resetPractice() {
+  clearInterval(_practice.interval);
+  _practice.running   = false;
+  _practice.remaining = _practice.total;
+  const btn  = document.getElementById('pm-toggle');
+  const disp = document.getElementById('pm-display');
+  if (btn)  btn.textContent = 'START';
+  if (disp) disp.classList.remove('running', 'done', 'warning');
+  updatePracticeDisplay();
+}
+
+function updatePracticeDisplay() {
+  const el = document.getElementById('pm-display');
+  if (!el) return;
+  const m = Math.floor(_practice.remaining / 60).toString().padStart(2, '0');
+  const s = (_practice.remaining % 60).toString().padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+  // Warning state: last 2 minutes while running
+  if (_practice.remaining > 0 && _practice.remaining <= 120 && _practice.running) {
+    el.classList.add('warning');
+    el.classList.remove('running');
+  }
+}
+
+// ══════════════════════════════════════════════
 //   PRACTICE TIMER
 // ══════════════════════════════════════════════
 const _timer = { total: 25 * 60, remaining: 25 * 60, running: false, interval: null };
@@ -1672,10 +1928,11 @@ async function loadData() {
     // ── Next Up ──
     renderNextUp();
 
-    // ── Velocity / Time / Period ──
+    // ── Velocity / Time / Period / Countdown ──
     renderVelocityLog();
     renderTimeRemaining();
     renderPeriodRadar();
+    renderExamCountdown();
 
     // ── Session ──
     renderSession();
@@ -1696,11 +1953,14 @@ async function loadData() {
 // initial load + auto-refresh every 60s
 loadData();
 setInterval(loadData, 60_000);
-// refresh live clocks every minute
+// refresh clocks + countdown every minute
 setInterval(() => {
+  renderExamCountdown();
   renderTimeRemaining();
   if (_data) renderSession();
 }, 60_000);
+// start countdown immediately (doesn't need API data)
+renderExamCountdown();
 </script>
 </body>
 </html>
