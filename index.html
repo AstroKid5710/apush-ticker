@@ -721,6 +721,21 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .refresh-dot .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 .refresh-dot .dot.spin { animation: blink .6s step-end 3; }
 
+/* ── Progress Ring ── */
+.progress-ring-wrap {
+  flex-shrink: 0;
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* ── Burn Down Chart ── */
+.burndown-wrap {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 6px 8px 4px;
+}
+
 /* ── Close Session Button ── */
 .close-session-wrap {
   flex-shrink: 0;
@@ -898,9 +913,11 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   <!-- COL 2: Today's Positions — full height -->
   <div class="today-col">
     <div class="panel-head">TODAY'S POSITIONS <span class="live">◉ LIVE</span></div>
+    <div class="progress-ring-wrap" id="progress-ring-body"><div class="skel">loading…</div></div>
     <div class="panel-body" id="today-body">
       <div class="skel">loading…</div>
     </div>
+    <div class="burndown-wrap" id="burndown-body"></div>
     <div class="close-session-wrap">
       <button class="close-session-btn" onclick="closeSession()">◼ CLOSE SESSION FOR TODAY</button>
     </div>
@@ -1373,6 +1390,135 @@ function recomputeStats() {
   _data.stats.podPace   = daysPOD   > 0 ? (podLeft   / daysPOD  ).toFixed(1) : podLeft.toString();
 }
 
+// ══════════════════════════════════════════════
+//   TODAY'S PROGRESS RING
+// ══════════════════════════════════════════════
+function renderProgressRing() {
+  const el = document.getElementById('progress-ring-body');
+  if (!el || !_data) return;
+
+  const todayTasks = _data.todayTasks;
+  const done  = todayTasks.filter(t => t.done).length;
+  const total = todayTasks.length;
+  if (!total) { el.innerHTML = `<div class="skel">No tasks today.</div>`; return; }
+
+  const pct   = Math.round(done / total * 100);
+  const color = pct >= 80 ? '#4bad6c' : pct >= 50 ? '#e07b30' : '#d94040';
+  const r     = 34;
+  const circ  = 2 * Math.PI * r;
+  const fill  = Math.min(pct, 100);
+  const offset = circ * (1 - fill / 100);
+
+  el.innerHTML = `
+    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="#101210" stroke-width="9"/>
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9"
+        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+        stroke-linecap="round" transform="rotate(-90 50 50)"
+        style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+      <text x="50" y="45" text-anchor="middle" font-size="${pct >= 100 ? '15' : '18'}"
+        font-weight="600" fill="${color}" font-family="JetBrains Mono,monospace">${pct}%</text>
+      <text x="50" y="60" text-anchor="middle" font-size="7.5"
+        fill="#2e5030" font-family="JetBrains Mono,monospace">${done} / ${total} TODAY</text>
+    </svg>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//   BURN DOWN CHART
+// ══════════════════════════════════════════════
+function renderBurnDown() {
+  const el = document.getElementById('burndown-body');
+  if (!el || !_data) return;
+
+  const tasks      = _data.allTasks;
+  const totalTasks = tasks.length;
+  const today      = _data.stats.todayEastern;
+
+  const startStr = '2026-04-15';
+  const examStr  = '2026-05-08';
+
+  const parseDate = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+  const toStr     = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+
+  const startDate  = parseDate(startStr);
+  const examDate   = parseDate(examStr);
+  const todayDate  = parseDate(today);
+  const totalDays  = Math.round((examDate - startDate) / 86400000);
+  const daysPassed = Math.min(Math.round((todayDate - startDate) / 86400000), totalDays);
+
+  // Cumulative completions per date
+  const compByDate = {};
+  tasks.forEach(t => {
+    const key = t.completedOn || (t.done ? t.date : null);
+    if (key) compByDate[key] = (compByDate[key] || 0) + 1;
+  });
+
+  // Actual line: remaining tasks for each day from start → today
+  let cumDone = 0;
+  const actual = [];
+  for (let i = 0; i <= daysPassed; i++) {
+    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+    cumDone += (compByDate[toStr(d)] || 0);
+    actual.push({ day: i, rem: totalTasks - cumDone });
+  }
+
+  // Chart geometry
+  const W = 218, H = 88;
+  const pL = 26, pR = 8, pT = 8, pB = 18;
+  const cW = W - pL - pR, cH = H - pT - pB;
+  const xS = d => pL + (d / totalDays) * cW;
+  const yS = r => pT + (r / totalTasks) * cH;
+
+  // Ideal burn line (dashed)
+  const idealPath = `M${xS(0).toFixed(1)},${yS(totalTasks).toFixed(1)} L${xS(totalDays).toFixed(1)},${yS(0).toFixed(1)}`;
+
+  // Actual path
+  const actualPath = actual.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'}${xS(p.day).toFixed(1)},${yS(p.rem).toFixed(1)}`
+  ).join(' ');
+
+  // Color: ahead vs behind ideal
+  const idealRem  = totalTasks * (1 - daysPassed / totalDays);
+  const currRem   = totalTasks - tasks.filter(t => t.done).length;
+  const diff      = currRem - idealRem;
+  const lineColor = diff <= 0 ? '#4bad6c' : diff <= totalTasks * 0.1 ? '#e07b30' : '#d94040';
+
+  // Today dot
+  const tx = xS(daysPassed), ty = yS(currRem);
+  const todayMarker = `<line x1="${tx.toFixed(1)}" y1="${pT}" x2="${tx.toFixed(1)}" y2="${pT+cH}" stroke="#182018" stroke-width="1" stroke-dasharray="2,2"/>`;
+  const todayDot    = `<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="3" fill="${lineColor}"/>`;
+
+  // Y labels
+  const yLabels = [totalTasks, Math.round(totalTasks / 2), 0].map(v =>
+    `<text x="${pL-3}" y="${(yS(v)+3).toFixed(1)}" text-anchor="end" font-size="6" fill="#2e5030" font-family="JetBrains Mono,monospace">${v}</text>`
+  ).join('');
+
+  // X labels
+  const xLabels = [
+    { day: 0, label: 'APR 15', anchor: 'start' },
+    { day: daysPassed, label: 'TODAY', anchor: 'middle' },
+    { day: totalDays, label: 'MAY 8', anchor: 'end' },
+  ].map(({ day, label, anchor }) =>
+    `<text x="${xS(day).toFixed(1)}" y="${H-3}" text-anchor="${anchor}" font-size="6"
+      fill="${label === 'TODAY' ? lineColor : '#2e5030'}"
+      font-weight="${label === 'TODAY' ? '700' : '400'}"
+      font-family="JetBrains Mono,monospace">${label}</text>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="font-size:7px;letter-spacing:.16em;color:var(--text-dim);margin-bottom:3px">BURN DOWN</div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+      ${yLabels}
+      ${todayMarker}
+      <path d="${idealPath}" fill="none" stroke="#1e2a1e" stroke-width="1" stroke-dasharray="3,3"/>
+      ${actual.length > 1 ? `<path d="${actualPath}" fill="none" stroke="${lineColor}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${todayDot}
+      ${xLabels}
+    </svg>
+  `;
+}
+
 function reRenderDashboard() {
   document.getElementById('status-bar').innerHTML = renderStatus(_data);
   document.getElementById('pnl-body').innerHTML   = renderPnL(_data);
@@ -1385,6 +1531,8 @@ function reRenderDashboard() {
   renderTimeRemaining();
   renderPeriodRadar();
   renderSession();
+  renderProgressRing();
+  renderBurnDown();
 }
 
 // ══════════════════════════════════════════════
@@ -2276,11 +2424,13 @@ async function loadData() {
     // ── Next Up ──
     renderNextUp();
 
-    // ── Velocity / Time / Period / Countdown ──
+    // ── Velocity / Time / Period / Countdown / Ring / Burndown ──
     renderVelocityLog();
     renderTimeRemaining();
     renderPeriodRadar();
     renderExamCountdown();
+    renderProgressRing();
+    renderBurnDown();
 
     // ── Session ──
     renderSession();
