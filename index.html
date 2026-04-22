@@ -913,10 +913,10 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   <!-- COL 2: Today's Positions — full height -->
   <div class="today-col">
     <div class="panel-head">TODAY'S POSITIONS <span class="live">◉ LIVE</span></div>
-    <div class="progress-ring-wrap" id="progress-ring-body"><div class="skel">loading…</div></div>
     <div class="panel-body" id="today-body">
       <div class="skel">loading…</div>
     </div>
+    <div class="progress-ring-wrap" id="progress-ring-body"></div>
     <div class="burndown-wrap" id="burndown-body"></div>
     <div class="close-session-wrap">
       <button class="close-session-btn" onclick="closeSession()">◼ CLOSE SESSION FOR TODAY</button>
@@ -1391,36 +1391,82 @@ function recomputeStats() {
 }
 
 // ══════════════════════════════════════════════
-//   TODAY'S PROGRESS RING
+//   TODAY'S PROGRESS RING  (multi-segment by type)
 // ══════════════════════════════════════════════
 function renderProgressRing() {
   const el = document.getElementById('progress-ring-body');
   if (!el || !_data) return;
 
+  const today      = _data.stats.todayEastern;
   const todayTasks = _data.todayTasks;
-  const done  = todayTasks.filter(t => t.done).length;
-  const total = todayTasks.length;
-  if (!total) { el.innerHTML = `<div class="skel">No tasks today.</div>`; return; }
+  const total      = todayTasks.length;
+  if (!total) { el.innerHTML = ''; return; }
 
-  const pct   = Math.round(done / total * 100);
-  const color = pct >= 80 ? '#4bad6c' : pct >= 50 ? '#e07b30' : '#d94040';
-  const r     = 34;
-  const circ  = 2 * Math.PI * r;
-  const fill  = Math.min(pct, 100);
-  const offset = circ * (1 - fill / 100);
+  const TYPE_COLORS = {
+    'Gauntlet FRQ':   '#e07b30',
+    'Packet of Doom': '#d94040',
+    'IDs / KT':       '#4bad6c',
+    'Review / Class': '#3d6840',
+    'Exam / Due':     '#c83838',
+  };
+  const TYPE_LABELS = {
+    'Gauntlet FRQ':   'GAUNT',
+    'Packet of Doom': 'POD',
+    'IDs / KT':       'IDS',
+    'Review / Class': 'CLASS',
+    'Exam / Due':     'EXAM',
+  };
+
+  // Group done today-tasks by type
+  const byType = {};
+  todayTasks.filter(t => t.done).forEach(t => {
+    byType[t.type] = (byType[t.type] || 0) + 1;
+  });
+
+  // Pct — use completedOn so it can exceed 100%
+  const closedToday   = _data.allTasks.filter(t =>
+    t.completedOn ? t.completedOn === today : t.done && t.date === today
+  ).length;
+  const effectiveDone = Math.max(closedToday, _session.completions);
+  const pct           = Math.round(effectiveDone / total * 100);
+
+  // SVG donut
+  const r = 34, circ = 2 * Math.PI * r;
+
+  // Dark background track
+  let circles = `<circle cx="50" cy="50" r="${r}" fill="none" stroke="#101210" stroke-width="9"/>`;
+
+  // One coloured arc per type, stacked around the ring
+  const segments = Object.entries(byType).filter(([, n]) => n > 0);
+  let cumAngle = -90; // start at 12 o'clock
+  segments.forEach(([type, count]) => {
+    const angle  = (count / total) * 360;
+    const length = (count / total) * circ;
+    circles += `<circle cx="50" cy="50" r="${r}" fill="none"
+      stroke="${TYPE_COLORS[type] || '#2e5030'}" stroke-width="9"
+      stroke-dasharray="${length.toFixed(2)} ${(circ - length).toFixed(2)}"
+      transform="rotate(${cumAngle} 50 50)"/>`;
+    cumAngle += angle;
+  });
+
+  // Center text
+  const fs = pct >= 200 ? '12' : pct >= 100 ? '15' : '18';
+  const centerColor = pct >= 100 ? '#4bad6c' : pct >= 50 ? '#e07b30' : '#d94040';
+  circles += `
+    <text x="50" y="47" text-anchor="middle" font-size="${fs}" font-weight="600"
+      fill="${centerColor}" font-family="JetBrains Mono,monospace">${pct}%</text>
+    <text x="50" y="60" text-anchor="middle" font-size="7"
+      fill="#2e5030" font-family="JetBrains Mono,monospace">${effectiveDone}/${total}</text>`;
+
+  // Legend
+  const legend = segments.map(([type, count]) =>
+    `<span style="color:${TYPE_COLORS[type] || '#2e5030'};font-size:7px;letter-spacing:.08em">◆ ${TYPE_LABELS[type] || type} ${count}</span>`
+  ).join('<span style="color:#182018;padding:0 5px">·</span>');
 
   el.innerHTML = `
-    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="${r}" fill="none" stroke="#101210" stroke-width="9"/>
-      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9"
-        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
-        stroke-linecap="round" transform="rotate(-90 50 50)"
-        style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
-      <text x="50" y="45" text-anchor="middle" font-size="${pct >= 100 ? '15' : '18'}"
-        font-weight="600" fill="${color}" font-family="JetBrains Mono,monospace">${pct}%</text>
-      <text x="50" y="60" text-anchor="middle" font-size="7.5"
-        fill="#2e5030" font-family="JetBrains Mono,monospace">${done} / ${total} TODAY</text>
-    </svg>
+    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+      style="display:block;margin:0 auto">${circles}</svg>
+    ${legend ? `<div style="text-align:center;margin-top:5px;line-height:1.9;padding:0 4px">${legend}</div>` : ''}
   `;
 }
 
