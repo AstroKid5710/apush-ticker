@@ -29,24 +29,29 @@ export default async function handler(req, res) {
     });
 
   try {
-    // First attempt: update Done + Completed On together
+    // Attempt: update Done + Completed On together
     let r = await patchNotion({
       Done:           { checkbox: Boolean(done) },
       'Completed On': done ? { date: { start: todayEastern } } : { date: null },
     });
 
-    // Fallback: if Completed On doesn't exist in the DB yet, update only Done
-    // so task toggling still works while the user adds the property to Notion.
     if (!r.ok) {
-      r = await patchNotion({ Done: { checkbox: Boolean(done) } });
-      if (!r.ok) {
-        const e = await r.json();
-        return res.status(r.status).json({ error: e.message ?? 'Notion PATCH failed' });
+      // Capture the real Notion error so the frontend can show it
+      const notionErr = await r.json().catch(() => ({}));
+      console.error('notion-update: full PATCH failed:', JSON.stringify(notionErr));
+
+      // Fallback: update only Done so the checkbox still works
+      const r2 = await patchNotion({ Done: { checkbox: Boolean(done) } });
+      if (!r2.ok) {
+        const e = await r2.json().catch(() => ({}));
+        return res.status(r2.status).json({ error: e.message ?? 'Notion PATCH failed' });
       }
+
       res.setHeader('Cache-Control', 'no-store');
       return res.status(200).json({
         success: true, pageId, done: Boolean(done), completedOn: null,
-        note: 'Add a Date property named "Completed On" to your Notion database to enable date tracking.',
+        // Surface the real Notion error so the client can log/display it
+        note: `"Completed On" was NOT saved. Notion error: ${notionErr.message ?? notionErr.code ?? 'unknown'}. Make sure: (1) the property exists in Notion, (2) it is a Date type, (3) the name is exactly "Completed On".`,
       });
     }
 

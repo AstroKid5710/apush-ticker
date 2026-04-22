@@ -1264,10 +1264,12 @@ function reRenderDashboard() {
 async function toggleTask(pageId, currentDone) {
   const newDone = !currentDone;
 
-  // Optimistic flip in allTasks AND todayTasks
+  // Save previous completedOn so we can roll it back if needed
   const allTask   = _data.allTasks.find(t => t.pageId === pageId);
   const todayTask = _data.todayTasks.find(t => t.pageId === pageId);
-  // Eastern "today" for completedOn stamp
+  const prevCompletedOn = allTask?.completedOn ?? null;
+
+  // Eastern "today" for optimistic completedOn stamp
   const _todayET = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
@@ -1290,12 +1292,24 @@ async function toggleTask(pageId, currentDone) {
       body: JSON.stringify({ pageId, done: newDone }),
     });
     if (!res.ok) throw new Error(`PATCH ${res.status}`);
+
+    // Parse the response to detect if Completed On wasn't saved
+    const data = await res.json().catch(() => null);
+    if (data?.note) {
+      // The PATCH fell back — Done was updated but Completed On wasn't saved to Notion.
+      // Roll back the optimistic completedOn so we stay honest with what's in Notion.
+      console.warn('[APUSH] Completed On sync issue:', data.note);
+      if (allTask)   allTask.completedOn = prevCompletedOn;
+      if (todayTask) todayTask.completedOn = prevCompletedOn;
+      reRenderDashboard();
+    }
+
     flashRefreshDot();
   } catch (err) {
     console.error('Toggle failed:', err);
-    // Rollback
-    if (allTask)   allTask.done   = currentDone;
-    if (todayTask) todayTask.done = currentDone;
+    // Full rollback — both done and completedOn
+    if (allTask)   { allTask.done = currentDone;   allTask.completedOn   = prevCompletedOn; }
+    if (todayTask) { todayTask.done = currentDone; todayTask.completedOn = prevCompletedOn; }
     if (newDone) _session.completions--;
     else _session.completions++;
     recomputeStats();
