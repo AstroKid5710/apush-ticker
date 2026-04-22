@@ -1987,8 +1987,12 @@ function closeSession() {
   document.getElementById('mktclose-sub').textContent = dateStr + ' · SESSION COMPLETE';
 
   // Stats row — 4 columns if there are overdue tasks, 3 if not
-  // Use session completions so extra tasks (overdue catch-up etc) push rate above 100%
-  const effectiveDone = todayTotal > 0 ? Math.max(todayDone, _session.completions) : todayDone;
+  // Count every task actually closed today by completedOn date (matches velocity chart logic)
+  const closedToday = _data.allTasks.filter(t => {
+    if (t.completedOn) return t.completedOn === today;
+    return t.done && t.date === today; // legacy fallback
+  }).length;
+  const effectiveDone = Math.max(closedToday, _session.completions);
   const pct = todayTotal ? Math.round(effectiveDone / todayTotal * 100) : 100;
   const overdueBlock = overdue.length ? `
     <div class="mktclose-divider"></div>
