@@ -7,15 +7,16 @@ export default async function handler(req, res) {
   if (req.method !== 'PATCH') return res.status(405).json({ error: 'Method not allowed' });
 
   const NOTION_TOKEN = process.env.NOTION_TOKEN;
-  const { pageId, done } = req.body ?? {};
+  const { pageId, done, completedOn: customDate } = req.body ?? {};
 
   if (!pageId) return res.status(400).json({ error: 'pageId is required' });
 
-  // Stamp today's Eastern date on completion; clear when unchecking
+  // Use the date the frontend chose; fall back to today ET if none provided
   const todayEastern = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York',
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
+  const completedOnDate = customDate || todayEastern;
 
   const patchNotion = (properties) =>
     fetch(`https://api.notion.com/v1/pages/${pageId}`, {
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
     // Attempt: update Done + Completed On together
     let r = await patchNotion({
       Done:           { checkbox: Boolean(done) },
-      'Completed On': done ? { date: { start: todayEastern } } : { date: null },
+      'Completed On': done ? { date: { start: completedOnDate } } : { date: null },
     });
 
     if (!r.ok) {
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true, pageId, done: Boolean(done),
-      completedOn: done ? todayEastern : null,
+      completedOn: done ? completedOnDate : null,
     });
   } catch (err) {
     console.error('notion-update PATCH error:', err);

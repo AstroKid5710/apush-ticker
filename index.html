@@ -720,6 +720,44 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 }
 .refresh-dot .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 .refresh-dot .dot.spin { animation: blink .6s step-end 3; }
+
+/* ── Date Picker Modal ── */
+.datepick-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(9,11,9,.82);
+  display: none; align-items: center; justify-content: center;
+}
+.datepick-overlay.open { display: flex; animation: cel-in .18s ease; }
+.datepick-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  padding: 22px 26px 20px;
+  min-width: 300px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.datepick-eyebrow { font-size: 7px; letter-spacing: .24em; color: var(--text-dim); }
+.datepick-taskname {
+  font-size: 10px; color: var(--green); letter-spacing: .04em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 260px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.datepick-label { font-size: 7px; letter-spacing: .16em; color: var(--text-dim); margin-top: 2px; }
+.datepick-input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 7px 9px;
+  letter-spacing: .04em;
+  outline: none;
+  width: 100%;
+  color-scheme: dark;
+  transition: border-color .15s;
+}
+.datepick-input:focus { border-color: var(--green-mid); }
+.datepick-controls { display: flex; gap: 6px; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -871,6 +909,20 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 <div class="refresh-dot">
   <div class="dot" id="rdot"></div>
   <span id="rtime">—</span>
+</div>
+
+<!-- ══════════════ DATE PICKER MODAL ══════════════ -->
+<div class="datepick-overlay" id="datepick-overlay">
+  <div class="datepick-box">
+    <div class="datepick-eyebrow">◉ CLOSE POSITION</div>
+    <div class="datepick-taskname" id="datepick-taskname"></div>
+    <div class="datepick-label">CLOSED ON</div>
+    <input type="date" class="datepick-input" id="datepick-input">
+    <div class="datepick-controls">
+      <button class="pc-btn g" onclick="confirmDatePick()">CONFIRM</button>
+      <button class="pc-btn d" onclick="cancelDatePick()">CANCEL</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════ ESSAY PRACTICE MODAL ══════════════ -->
@@ -1259,28 +1311,67 @@ function reRenderDashboard() {
 }
 
 // ══════════════════════════════════════════════
+//   DATE PICKER
+// ══════════════════════════════════════════════
+let _datepickResolve = null;
+
+function showDatePicker(taskName) {
+  return new Promise(resolve => {
+    _datepickResolve = resolve;
+    const todayET = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+    document.getElementById('datepick-taskname').textContent = taskName;
+    document.getElementById('datepick-input').value = todayET;
+    document.getElementById('datepick-overlay').classList.add('open');
+    // Focus the input so keyboard users can immediately type
+    setTimeout(() => document.getElementById('datepick-input').focus(), 50);
+  });
+}
+
+function confirmDatePick() {
+  const date = document.getElementById('datepick-input').value;
+  document.getElementById('datepick-overlay').classList.remove('open');
+  if (_datepickResolve) { _datepickResolve({ confirmed: true, date }); _datepickResolve = null; }
+}
+
+function cancelDatePick() {
+  document.getElementById('datepick-overlay').classList.remove('open');
+  if (_datepickResolve) { _datepickResolve({ confirmed: false }); _datepickResolve = null; }
+}
+
+// Allow Enter to confirm, Escape to cancel
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('datepick-overlay').classList.contains('open')) return;
+  if (e.key === 'Enter')  { e.preventDefault(); confirmDatePick(); }
+  if (e.key === 'Escape') { e.preventDefault(); cancelDatePick();  }
+});
+
+// ══════════════════════════════════════════════
 //   CHECKBOX INTERACTION
 // ══════════════════════════════════════════════
 async function toggleTask(pageId, currentDone) {
   const newDone = !currentDone;
 
-  // Save previous completedOn so we can roll it back if needed
   const allTask   = _data.allTasks.find(t => t.pageId === pageId);
   const todayTask = _data.todayTasks.find(t => t.pageId === pageId);
   const prevCompletedOn = allTask?.completedOn ?? null;
 
-  // Eastern "today" for optimistic completedOn stamp
-  const _todayET = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
-  if (allTask)   { allTask.done = newDone;   allTask.completedOn   = newDone ? _todayET : null; }
-  if (todayTask) { todayTask.done = newDone; todayTask.completedOn = newDone ? _todayET : null; }
+  // When marking done — ask what date before doing anything
+  let chosenDate = null;
+  if (newDone) {
+    const { confirmed, date } = await showDatePicker(allTask?.task ?? 'task');
+    if (!confirmed) return; // user hit Cancel — leave task as-is
+    chosenDate = date;
+  }
 
-  // Track session completions
+  // Optimistic update with the chosen (or cleared) date
+  if (allTask)   { allTask.done = newDone;   allTask.completedOn   = newDone ? chosenDate : null; }
+  if (todayTask) { todayTask.done = newDone; todayTask.completedOn = newDone ? chosenDate : null; }
+
   if (newDone) _session.completions++;
   else if (_session.completions > 0) _session.completions--;
 
-  // Recompute stats and re-render everything immediately
   recomputeStats();
   reRenderDashboard();
   if (newDone) checkCelebration();
@@ -1289,15 +1380,12 @@ async function toggleTask(pageId, currentDone) {
     const res = await fetch('/api/notion-update', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId, done: newDone }),
+      body: JSON.stringify({ pageId, done: newDone, completedOn: chosenDate }),
     });
     if (!res.ok) throw new Error(`PATCH ${res.status}`);
 
-    // Parse the response to detect if Completed On wasn't saved
     const data = await res.json().catch(() => null);
     if (data?.note) {
-      // The PATCH fell back — Done was updated but Completed On wasn't saved to Notion.
-      // Roll back the optimistic completedOn so we stay honest with what's in Notion.
       console.warn('[APUSH] Completed On sync issue:', data.note);
       if (allTask)   allTask.completedOn = prevCompletedOn;
       if (todayTask) todayTask.completedOn = prevCompletedOn;
@@ -1307,8 +1395,7 @@ async function toggleTask(pageId, currentDone) {
     flashRefreshDot();
   } catch (err) {
     console.error('Toggle failed:', err);
-    // Full rollback — both done and completedOn
-    if (allTask)   { allTask.done = currentDone;   allTask.completedOn   = prevCompletedOn; }
+    if (allTask)   { allTask.done = currentDone;   allTask.completedOn = prevCompletedOn; }
     if (todayTask) { todayTask.done = currentDone; todayTask.completedOn = prevCompletedOn; }
     if (newDone) _session.completions--;
     else _session.completions++;
