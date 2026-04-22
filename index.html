@@ -1987,7 +1987,9 @@ function closeSession() {
   document.getElementById('mktclose-sub').textContent = dateStr + ' · SESSION COMPLETE';
 
   // Stats row — 4 columns if there are overdue tasks, 3 if not
-  const pct = todayTotal ? Math.round(todayDone / todayTotal * 100) : 100;
+  // Use session completions so extra tasks (overdue catch-up etc) push rate above 100%
+  const effectiveDone = todayTotal > 0 ? Math.max(todayDone, _session.completions) : todayDone;
+  const pct = todayTotal ? Math.round(effectiveDone / todayTotal * 100) : 100;
   const overdueBlock = overdue.length ? `
     <div class="mktclose-divider"></div>
     <div class="mktclose-stat">
@@ -2008,7 +2010,7 @@ function closeSession() {
     ${overdueBlock}
     <div class="mktclose-divider"></div>
     <div class="mktclose-stat">
-      <div class="mktclose-stat-val ${pct < 80 ? 'w' : ''}">${pct}%</div>
+      <div class="mktclose-stat-val ${pct >= 100 ? '' : pct >= 80 ? '' : 'w'}">${pct}%</div>
       <div class="mktclose-stat-label">TODAY WIN RATE</div>
     </div>
   `;
