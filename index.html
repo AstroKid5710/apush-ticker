@@ -2338,14 +2338,14 @@ let _celebrationShown = false;
 
 function checkCelebration() {
   if (!_data) return;
-  const todayTasks = _data.todayTasks;
-  if (!todayTasks.length) return;
-  const todayDone = todayTasks.filter(t => t.done).length;
+  const allTasks = _data.allTasks;
+  if (!allTasks.length) return;
+  const totalDone = allTasks.filter(t => t.done).length;
 
-  if (todayDone === todayTasks.length && !_celebrationShown) {
+  if (totalDone === allTasks.length && !_celebrationShown) {
     _celebrationShown = true;
     showCelebration();
-  } else if (todayDone < todayTasks.length) {
+  } else if (totalDone < allTasks.length) {
     _celebrationShown = false; // reset if something gets unchecked
   }
 }
@@ -2482,6 +2482,9 @@ async function loadData() {
 
     // ── Session ──
     renderSession();
+
+    // ── Celebration check on load ──
+    checkCelebration();
 
     setRefreshTime();
     flashRefreshDot();
