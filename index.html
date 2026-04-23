@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APUSH">
 <title>APUSH TRADING FLOOR</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23090b09'/><polyline points='3,25 8,17 14,20 21,10 29,13' fill='none' stroke='%234bad6c' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/><circle cx='29' cy='13' r='2.5' fill='%234bad6c'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -619,95 +622,158 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .skel { color: var(--text-dim); font-size: 9px; font-style: italic; padding: 16px; }
 
 /* ══════════════════════════════════════════════════════════
-   MOBILE  (≤ 700px)  — single-column, task-first layout
+   MOBILE BOTTOM NAV — hidden on desktop
+══════════════════════════════════════════════════════════ */
+.mob-nav { display: none; }
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE  (≤ 700px)  — tabbed layout with bottom nav
 ══════════════════════════════════════════════════════════ */
 @media (max-width: 700px) {
-  /* Allow full-page scroll */
-  html, body { height: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* ── Full-page scroll with safe-area padding ── */
+  html { height: 100%; }
+  body {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
 
-  /* Sticky top strip */
+  /* ── Sticky top strip (below iOS status bar handled by viewport-fit) ── */
   .ticker-wrap { position: sticky; top: 0; z-index: 20; }
-  .status-bar  { position: sticky; top: 34px; z-index: 19;
-                 overflow-x: auto; flex-wrap: nowrap; gap: 14px; }
+  .status-bar  {
+    position: sticky; top: 34px; z-index: 19;
+    overflow-x: auto; flex-wrap: nowrap; gap: 14px;
+  }
 
-  /* Flatten 3-col grid into single column */
+  /* ── Flatten grid into single column ── */
   .main {
     display: flex;
     flex-direction: column;
     height: auto;
     overflow: visible;
-    background: var(--border);
-    gap: 1px;
+    background: var(--bg);
+    gap: 0;
   }
 
-  /* ── Order: today → dashboard → table → sidebar ── */
-  .today-col  { order: 1; width: 100%; height: auto; }
-  .right-area { order: 2; height: auto; overflow: visible; }
-  .left-col   { order: 3; width: 100%; height: auto; overflow: visible; }
+  /* ── Tab-based visibility system ──
+     All three main columns + data-mob-show sections are hidden by default.
+     Each body[data-tab] rule reveals only what belongs to that tab.     ── */
+  .today-col, .left-col, .right-area { display: none !important; }
+  [data-mob-show]                     { display: none !important; }
 
-  /* Let panel bodies grow naturally */
-  .panel-body { flex: none; overflow-y: visible; max-height: none; min-height: 0; }
+  body[data-tab="today"] .today-col                     { display: flex !important; }
+
+  body[data-tab="stats"]  .left-col                     { display: flex !important; }
+  body[data-tab="stats"]  [data-mob-show="stats"]       { display: block !important; }
+  body[data-tab="stats"]  .right-area                   { display: flex !important; }
+
+  body[data-tab="all"]    .right-area                   { display: flex !important; }
+  body[data-tab="all"]    [data-mob-show="all"]         { display: block !important; }
+
+  body[data-tab="timer"]  .left-col                     { display: flex !important; }
+  body[data-tab="timer"]  [data-mob-show="timer"]       { display: block !important; }
+
+  /* ── Column sizing ── */
+  .today-col, .left-col, .right-area {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* ── Panel bodies grow naturally ── */
+  .panel-body  { flex: none; overflow-y: visible; max-height: none; min-height: 0; }
   .left-scroll { flex: none; overflow-y: visible; height: auto; }
+  .panel-body-left { padding: 10px 14px; }
+  .panel-head  { font-size: 8.5px; padding: 8px 14px 7px; }
 
-  /* Dashboard row: show only P&L, stack it */
+  /* ── Right-area: vertical stack ── */
+  .right-area { flex-direction: column; }
   .dash-row {
     display: flex;
     flex-direction: column;
     height: auto;
     background: var(--bg);
+    gap: 0;
   }
-  /* Hide velocity chart and period coverage on mobile */
-  .dash-panel:nth-child(2),
-  .dash-panel:nth-child(3) { display: none; }
-
-  /* Hide desktop-only sidebar sections */
-  .mob-hide { display: none; }
+  .dash-panel { display: flex !important; }
 
   /* ── Today's tasks — big touch targets ── */
   .pos-row {
-    grid-template-columns: 36px 1fr auto;
-    padding: 11px 4px;
-    min-height: 52px;
-    gap: 8px;
+    grid-template-columns: 44px 1fr auto;
+    padding: 12px 8px;
+    min-height: 56px;
+    gap: 10px;
   }
-  /* Hide type pill and trailing icon to save width */
   .pos-tag { display: none; }
   .pos-row > span:last-child { display: none; }
-
-  /* Bigger checkbox */
   .pos-check {
-    width: 24px; height: 24px;
-    border-radius: 3px;
+    width: 28px; height: 28px;
+    border-radius: 4px;
   }
-  .pos-check.checked::after { font-size: 14px; }
+  .pos-check.checked::after { font-size: 16px; }
+  .pos-name { font-size: 11px; white-space: normal; }
+  .pos-est  { font-size: 9px; }
 
-  .pos-name  { font-size: 10.5px; }
-  .pos-est   { font-size: 9px; }
+  /* ── Progress ring / burndown / close session ── */
+  .progress-ring-wrap  { padding: 14px 14px 10px; }
+  .burndown-wrap       { padding: 10px 10px 8px; }
+  .close-session-wrap  { padding: 12px 14px 16px; }
+  .close-session-btn   { padding: 12px 0; font-size: 9px; letter-spacing: .16em; }
 
-  /* ── Full task table — trimmed to 3 cols ── */
-  .table-panel { height: auto; overflow: visible; min-height: 200px; }
+  /* ── Full task table ── */
+  .table-panel  { height: auto; overflow: visible; min-height: 200px; }
   .table-scroll { overflow-x: auto; height: auto; overflow-y: visible; }
-
-  /* Hide SCHED, CLOSED, EST, WEEK columns — keep TASK, TYPE, ✓ */
   th:nth-child(3), td:nth-child(3),
   th:nth-child(4), td:nth-child(4),
   th:nth-child(5), td:nth-child(5),
   th:nth-child(6), td:nth-child(6) { display: none; }
-
-  /* Fat tap target for table checkbox */
   .td-done { padding: 14px 16px; min-width: 48px; font-size: 15px; }
-
-  td, th { padding: 7px 8px; }
+  td, th { padding: 8px 10px; }
   table  { font-size: 10px; }
 
-  /* ── Filter bar — allow wrap ── */
-  .filter-bar { flex-wrap: wrap; gap: 5px; }
-  /* Hide week filters on mobile (save space) */
+  /* ── Filter bar ── */
+  .filter-bar { flex-wrap: wrap; gap: 5px; padding: 8px 12px; }
   .filter-btn[data-week]:not([data-week="ALL"]) { display: none; }
+  .filter-btn { padding: 5px 10px; font-size: 8px; }
 
-  /* ── Misc ── */
+  /* ── Refresh dot hidden ── */
   .refresh-dot { display: none; }
-  .panel-head  { font-size: 8px; padding: 7px 10px 6px; }
+
+  /* ── Bottom nav bar ── */
+  .mob-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(52px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(9, 11, 9, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border2);
+    z-index: 100;
+    justify-content: space-around;
+    align-items: stretch;
+  }
+  .mob-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    cursor: pointer;
+    padding: 6px 0 0;
+    transition: color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mob-tab.active        { color: var(--green); }
+  .mob-tab-icon          { font-size: 14px; line-height: 1; }
+  .mob-tab-label         { font-size: 6.5px; letter-spacing: .14em; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -839,7 +905,7 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 .datepick-controls { display: flex; gap: 6px; margin-top: 4px; }
 </style>
 </head>
-<body>
+<body data-tab="today">
 
 <!-- ══════════════ TICKER ══════════════ -->
 <div class="ticker-wrap">
@@ -864,27 +930,28 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   <div class="left-col">
     <div class="left-scroll">
 
-      <!-- Exam Countdown -->
-      <div class="panel-head" style="color:var(--amber)">EXAM COUNTDOWN</div>
-      <div id="cdown-wrap" class="cdown-wrap"><div class="skel">loading…</div></div>
+      <!-- STATS tab sections: countdown, deadlines, next up -->
+      <div data-mob-show="stats">
+        <div class="panel-head" style="color:var(--amber)">EXAM COUNTDOWN</div>
+        <div id="cdown-wrap" class="cdown-wrap"><div class="skel">loading…</div></div>
 
-      <div class="col-divider"></div>
+        <div class="col-divider"></div>
 
-      <div class="panel-head">DEADLINE ORDER BOOK</div>
-      <div class="panel-body-left" id="dl-body"><div class="skel">loading…</div></div>
+        <div class="panel-head">DEADLINE ORDER BOOK</div>
+        <div class="panel-body-left" id="dl-body"><div class="skel">loading…</div></div>
 
-      <div class="col-divider"></div>
+        <div class="col-divider"></div>
 
-      <div class="panel-head">NEXT UP</div>
-      <div class="panel-body-left" id="nextup-body"><div class="skel">loading…</div></div>
+        <div class="panel-head">NEXT UP</div>
+        <div class="panel-body-left" id="nextup-body"><div class="skel">loading…</div></div>
+      </div>
 
-      <div class="mob-hide">
+      <!-- TIMER tab sections: time remaining, pomodoro timer, session log -->
+      <div data-mob-show="timer">
         <div class="col-divider"></div>
         <div class="panel-head">TIME REMAINING TODAY</div>
         <div class="panel-body-left" id="timerem-body"><div class="skel">loading…</div></div>
-      </div>
 
-      <div class="mob-hide">
         <div class="col-divider"></div>
         <div class="panel-head">PRACTICE TIMER</div>
         <div class="panel-body-left" id="timer-body">
@@ -899,12 +966,15 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
             <button class="timer-btn d" onclick="resetTimer()">RESET</button>
           </div>
         </div>
-      </div>
 
-      <div class="mob-hide">
         <div class="col-divider"></div>
         <div class="panel-head">SESSION LOG</div>
         <div class="panel-body-left" id="session-body"><div class="skel">loading…</div></div>
+
+        <div class="col-divider"></div>
+        <div class="panel-body-left">
+          <button class="close-session-btn" style="width:100%" onclick="openPracticeModal()">◉ ESSAY PRACTICE TERMINAL</button>
+        </div>
       </div>
 
     </div>
@@ -926,8 +996,8 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
   <!-- COL 3: Dashboard row + Table -->
   <div class="right-area">
 
-    <!-- Dashboard: P&L | Velocity | Period Coverage -->
-    <div class="dash-row">
+    <!-- Dashboard: P&L | Velocity | Period Coverage — STATS tab on mobile -->
+    <div class="dash-row" data-mob-show="stats">
       <div class="dash-panel">
         <div class="panel-head">P&amp;L DASHBOARD <span class="live">◉ LIVE</span></div>
         <div class="panel-body-left" id="pnl-body"><div class="skel">loading…</div></div>
@@ -942,8 +1012,8 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
       </div>
     </div>
 
-    <!-- Full Task Table -->
-    <div class="table-panel">
+    <!-- Full Task Table — ALL TASKS tab on mobile -->
+    <div class="table-panel" data-mob-show="all">
       <div class="panel-head">
         FULL ORDER BOOK
         <span id="table-count" style="color:var(--text-dim);font-size:7px;letter-spacing:.1em"></span>
@@ -988,6 +1058,26 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 
   </div>
 </div>
+
+<!-- ══════════════ MOBILE BOTTOM NAV ══════════════ -->
+<nav class="mob-nav" id="mob-nav">
+  <button class="mob-tab active" data-tab="today" onclick="setTab('today')">
+    <span class="mob-tab-icon">◉</span>
+    <span class="mob-tab-label">TODAY</span>
+  </button>
+  <button class="mob-tab" data-tab="stats" onclick="setTab('stats')">
+    <span class="mob-tab-icon">▲</span>
+    <span class="mob-tab-label">STATS</span>
+  </button>
+  <button class="mob-tab" data-tab="all" onclick="setTab('all')">
+    <span class="mob-tab-icon">≡</span>
+    <span class="mob-tab-label">ALL TASKS</span>
+  </button>
+  <button class="mob-tab" data-tab="timer" onclick="setTab('timer')">
+    <span class="mob-tab-icon">◷</span>
+    <span class="mob-tab-label">TIMER</span>
+  </button>
+</nav>
 
 <!-- refresh indicator -->
 <div class="refresh-dot">
@@ -1040,6 +1130,17 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+//   MOBILE TAB SWITCHING
+// ══════════════════════════════════════════════
+function setTab(tab) {
+  document.body.dataset.tab = tab;
+  document.querySelectorAll('.mob-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
 // ══════════════════════════════════════════════
 //   HELPERS
 // ══════════════════════════════════════════════
