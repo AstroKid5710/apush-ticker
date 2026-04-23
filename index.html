@@ -1647,7 +1647,7 @@ async function toggleTask(pageId, currentDone) {
 
   recomputeStats();
   reRenderDashboard();
-  if (newDone) checkCelebration();
+  checkCelebration();
 
   try {
     const res = await fetch('/api/notion-update', {
