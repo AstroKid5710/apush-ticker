@@ -2338,15 +2338,22 @@ let _celebrationShown = false;
 
 function checkCelebration() {
   if (!_data) return;
-  const allTasks = _data.allTasks;
-  if (!allTasks.length) return;
-  const totalDone = allTasks.filter(t => t.done).length;
+  const today      = _data.stats.todayEastern;
+  const todayTasks = _data.todayTasks;
+  if (!todayTasks.length) return;
+  const todayTotal = todayTasks.length;
 
-  if (totalDone === allTasks.length && !_celebrationShown) {
+  // Count everything completed today (scheduled + overdue catch-ups)
+  const closedToday = _data.allTasks.filter(t =>
+    t.completedOn ? t.completedOn === today : t.done && t.date === today
+  ).length;
+  const effectiveDone = Math.max(closedToday, _session.completions);
+
+  if (effectiveDone >= todayTotal && !_celebrationShown) {
     _celebrationShown = true;
     showCelebration();
-  } else if (totalDone < allTasks.length) {
-    _celebrationShown = false; // reset if something gets unchecked
+  } else if (effectiveDone < todayTotal) {
+    _celebrationShown = false; // reset so it can fire again
   }
 }
 
