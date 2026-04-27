@@ -1437,7 +1437,7 @@ function renderPnL({ stats }) {
       <div class="pnl-track"><div class="pnl-fill ${gc}" style="width:0%" data-target="${gPct}"></div></div>
       <div class="pnl-sub">
         <span>${gauntletDone} / ${gauntletTotal} filed</span>
-        <span class="warn">▲ ${gauntPace}/day · ${daysGaunt}d left</span>
+        <span class="${gc}">▲ ${gauntPace}/day · ${daysGaunt}d left</span>
       </div>
     </div>
     <div class="pnl-item">
@@ -1448,7 +1448,7 @@ function renderPnL({ stats }) {
       <div class="pnl-track"><div class="pnl-fill ${pc}" style="width:0%" data-target="${pPct}"></div></div>
       <div class="pnl-sub">
         <span>${podDone} / ${podTotal} filed</span>
-        <span class="danger">▲ ${podPace} pg/day · ${daysPOD}d left</span>
+        <span class="${pc}">▲ ${podPace} pg/day · ${daysPOD}d left</span>
       </div>
     </div>
     <div class="pnl-item">
