@@ -1425,7 +1425,8 @@ function renderPnL({ stats }) {
   const gPct  = gauntletTotal ? Math.round(gauntletDone / gauntletTotal * 100) : 0;
   const pPct  = podTotal      ? Math.round(podDone      / podTotal      * 100) : 0;
   const tPct  = totalTasks    ? Math.round(totalDone    / totalTasks    * 100) : 0;
-  const gc = urgency(daysGaunt), pc = urgency(daysPOD);
+  const gc = paceStatus(gauntPace, 1.2, 2.5);
+  const pc = paceStatus(podPace, 0.5, 1.0);
   return `
     <div class="pnl-item">
       <div class="pnl-top">
