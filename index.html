@@ -1276,23 +1276,24 @@ let _typeFilter = 'ALL';
 let _showDone   = true; // show done tasks by default in the table
 
 // ══════════════════════════════════════════════
+//   PACE STATUS  — shared helper
+//   Gauntlet: >2.5/day = red, >1.2 = amber, ≤1.2 = green
+//   POD:      >1.0/day = red, >0.5 = amber, ≤0.5 = green
+// ══════════════════════════════════════════════
+function paceStatus(pace, greenMax, amberMax) {
+  const n = parseFloat(pace);
+  if (isNaN(n) || n <= greenMax) return 'g';
+  if (n <= amberMax)              return 'w';
+  return 'r';
+}
+
+// ══════════════════════════════════════════════
 //   RENDER TICKER  — stock-style with ▲ ━ ▼
 // ══════════════════════════════════════════════
 function renderTicker({ stats, todayTasks }) {
   const { gauntletDone, gauntletTotal, podDone, podTotal,
           totalDone, totalTasks, daysGaunt, daysPOD, daysExam,
           gauntPace, podPace } = stats;
-
-  // Pace-based status: how many units/day are still required?
-  // Gauntlet: >2.5/day = red, >1.2 = amber, ≤1.2 = green
-  // POD:      >1.0/day = red, >0.5 = amber, ≤0.5 = green
-  // Portfolio % complete relative to time gone
-  function paceStatus(pace, greenMax, amberMax) {
-    const n = parseFloat(pace);
-    if (isNaN(n) || n <= greenMax) return 'g';
-    if (n <= amberMax)              return 'w';
-    return 'r';
-  }
 
   // Arrow icon — ▲ up, ━ flat, ▼ down
   function arrow(c) {
