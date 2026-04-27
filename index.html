@@ -1461,6 +1461,26 @@ function renderPnL({ stats }) {
         <span>${totalDone} / ${totalTasks} tasks closed</span>
       </div>
     </div>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:6.5px;letter-spacing:.14em;color:var(--text-dim);margin-bottom:2px">PACE KEY</div>
+      <div style="display:flex;gap:10px">
+        <div style="font-size:6.5px;letter-spacing:.08em">
+          <span style="color:var(--text-dim)">GAUNT</span>
+          <span style="color:var(--green)"> ◆ ≤1.2</span>
+          <span style="color:var(--amber)"> ◆ ≤2.5</span>
+          <span style="color:var(--red)"> ◆ >2.5</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="font-size:6.5px;letter-spacing:.08em">
+          <span style="color:var(--text-dim)">POD&nbsp;&nbsp;&nbsp;</span>
+          <span style="color:var(--green)"> ◆ ≤0.5</span>
+          <span style="color:var(--amber)"> ◆ ≤1.0</span>
+          <span style="color:var(--red)"> ◆ >1.0</span>
+        </div>
+      </div>
+      <div style="font-size:6px;letter-spacing:.08em;color:var(--text-dim);margin-top:1px">units/day remaining</div>
+    </div>
   `;
 }
 
