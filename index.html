@@ -447,6 +447,211 @@ body {
   font-weight: 600; user-select: none;
 }
 
+/* ══════════════════════════════════════════════
+   GAUNTLET & POD MILESTONE CELEBRATIONS
+══════════════════════════════════════════════ */
+.cel-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden; cursor: pointer;
+  contain: layout paint;
+}
+.cel-overlay-mute {
+  position: absolute; top: 14px; right: 14px;
+  font-family: var(--mono); font-size: 7.5px; letter-spacing: .15em;
+  color: var(--text-mid); border: 1px solid var(--border2);
+  background: transparent; padding: 5px 10px; cursor: pointer;
+  z-index: 20; transition: color .15s, border-color .15s;
+}
+.cel-overlay-mute:hover { color: var(--green); border-color: var(--green-mid); }
+@keyframes cel-overlay-out { from{opacity:1} to{opacity:0;transform:scale(1.01)} }
+
+/* ── Glitch Meltdown (Gauntlet) ── */
+@keyframes glitch-overlay-in { from{opacity:0} to{opacity:1} }
+@keyframes glitch-flicker {
+  0%,100%{ opacity:1 }
+  8%  { opacity:.2 } 16% { opacity:1 } 25% { opacity:0 }
+  33% { opacity:1 } 44% { opacity:.3 } 52% { opacity:1 }
+  60% { opacity:0 } 68% { opacity:1 } 76% { opacity:.4 } 84% { opacity:1 }
+}
+@keyframes glitch-text-chaos {
+  0%   { transform:translateX(0);   color:var(--green-hi); filter:none; }
+  9%   { transform:translateX(-9px);color:#ff0040; filter:blur(1px); }
+  18%  { transform:translateX(9px); color:#00eeff; filter:none; }
+  27%  { transform:translateX(0);   color:var(--green-hi); }
+  38%  { transform:translateX(0);   color:var(--green-hi); }
+  46%  { transform:translateX(-5px);color:#ff0040; filter:blur(2px); }
+  55%  { transform:translateX(7px); color:#00eeff; }
+  64%  { transform:translateX(0);   color:var(--green-hi); filter:none; }
+  72%  { transform:translateX(-3px);color:#ff0040; }
+  80%  { transform:translateX(4px); color:#00eeff; filter:blur(1px); }
+  88%  { transform:translateX(0);   color:var(--green-hi); filter:none; }
+  100% { transform:translateX(0);   color:var(--green-hi); filter:none; }
+}
+@keyframes reboot-label-in { from{opacity:0;letter-spacing:.4em} to{opacity:1;letter-spacing:.2em} }
+@keyframes reveal-type-glow {
+  from { text-shadow: 0 0 80px rgba(99,199,132,.9); }
+  to   { text-shadow: 0 0 40px rgba(99,199,132,.4); }
+}
+@keyframes draw-x-line { to { stroke-dashoffset: 0; } }
+.glitch-overlay {
+  background: rgba(9,11,9,.97);
+  border: 1px solid var(--border2);
+  animation: glitch-overlay-in .2s ease forwards;
+}
+.glitch-overlay.closing { animation: cel-overlay-out .4s ease forwards; }
+.gl-initial-wrap { position: relative; display: inline-block; text-align: center; }
+.gl-initial-text {
+  font-size: clamp(38px, 9vw, 68px); font-weight: 700;
+  letter-spacing: .07em; color: var(--green-hi);
+  text-align: center; line-height: 1.05;
+  text-shadow: 0 0 40px rgba(99,199,132,.3); transition: opacity .15s;
+}
+.gl-initial-text.glitching { animation: glitch-text-chaos .9s linear forwards; }
+.gl-x-svg {
+  position: absolute; inset: -10px -8px;
+  width: calc(100% + 16px); height: calc(100% + 20px);
+  pointer-events: none; overflow: visible;
+}
+.gl-x-svg line {
+  stroke: var(--green-hi); stroke-width: 4; stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--green-hi)) drop-shadow(0 0 14px rgba(99,199,132,.5));
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+}
+.gl-x-svg .xl1 { animation: draw-x-line .38s ease 0.45s forwards; }
+.gl-x-svg .xl2 { animation: draw-x-line .32s ease 0.86s forwards; }
+.gl-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity .1s; }
+.gl-canvas.active { opacity: 1; }
+.gl-reboot-wrap {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; z-index: 3;
+}
+.gl-reboot-label {
+  font-size: 9px; letter-spacing: .2em; color: var(--text-mid);
+  margin-bottom: 16px; animation: reboot-label-in .3s ease forwards;
+}
+.gl-progress-track { width: min(280px, 70vw); height: 1px; background: var(--border2); position: relative; overflow: hidden; }
+.gl-progress-bar { height: 100%; background: var(--green); width: 0; box-shadow: 0 0 8px var(--green); will-change: width; }
+.gl-reveal-title {
+  font-size: clamp(42px, 10vw, 76px); font-weight: 700;
+  letter-spacing: .07em; color: var(--green-hi);
+  text-align: center; line-height: 1.05; margin-top: 0;
+  opacity: 0; display: none; animation: reveal-type-glow .6s ease forwards;
+}
+.gl-sub { font-size: 10px; letter-spacing: .2em; color: var(--text-mid); margin-top: 20px; opacity: 0; }
+.gl-dismiss { font-size: 7px; letter-spacing: .14em; color: var(--border2); margin-top: 36px; opacity: 0; }
+.gl-confetti { position: absolute; top: 0; pointer-events: none; font-weight: 600; user-select: none; animation: ticker-fall linear forwards; }
+
+/* ── Packet of Doom (perf-fixed) ── */
+@keyframes doom-flash {
+  0%   { background: rgba(9,11,9,0);       }
+  5%   { background: rgba(9,11,9,.5);      }
+  12%  { background: rgba(9,11,9,.12);     }
+  20%  { background: rgba(35,4,4,.72);     }
+  28%  { background: rgba(9,11,9,.1);      }
+  38%  { background: rgba(60,4,4,.84);     }
+  46%  { background: rgba(9,11,9,.08);     }
+  57%  { background: rgba(90,5,5,.92);     }
+  63%  { background: rgba(2,2,2,.99);      }
+  70%  { background: rgba(2,2,2,.99);      }
+  80%  { background: rgba(255,255,255,1);  }
+  100% { background: rgba(9,11,9,.97);     }
+}
+@keyframes doom-red-glow {
+  0%,5% { opacity:0; } 20% { opacity:1; } 28% { opacity:0; }
+  38%   { opacity:1; } 46% { opacity:0; } 57% { opacity:1; }
+  63%   { opacity:0; } 100%{ opacity:0; }
+}
+@keyframes doom-shake {
+  0%,100%{ transform:translate(0,0); }
+  10% { transform:translate(-13px,-7px); } 20% { transform:translate(13px,7px); }
+  30% { transform:translate(-10px,4px);  } 40% { transform:translate(10px,-4px); }
+  50% { transform:translate(-7px,6px);   } 60% { transform:translate(7px,-3px); }
+  70% { transform:translate(-4px,2px);   } 80% { transform:translate(4px,-1px); }
+  90% { transform:translate(-1px,1px);   }
+}
+@keyframes doom-title-in {
+  from { opacity:0; transform:translateY(-18px); filter:blur(6px); }
+  to   { opacity:1; transform:none; filter:none; }
+}
+@keyframes doom-glitch {
+  0%  { text-shadow:none; transform:translateX(0); }
+  8%  { text-shadow:-5px 0 #ff0040,5px 0 #00eeff; transform:translateX(-5px); }
+  16% { text-shadow:5px 0 #ff0040,-5px 0 #00eeff; transform:translateX(5px); }
+  24% { text-shadow:none; transform:translateX(0); }
+  40% { text-shadow:-3px 0 #ff0040; transform:translateX(-3px); }
+  46% { text-shadow:none; transform:translateX(0); }
+  100%{ text-shadow:none; transform:translateX(0); }
+}
+@keyframes destroyed-slam {
+  0%  { opacity:0; transform:scale(1.9) translateY(18px); filter:blur(5px); }
+  55% { opacity:1; transform:scale(1.04) translateY(-3px); filter:none; }
+  100%{ opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes doom-eyebrow-in { from{opacity:0;letter-spacing:.6em} to{opacity:1;letter-spacing:.3em} }
+.doom-overlay {
+  background: rgba(9,11,9,.97); will-change: background;
+  animation: doom-flash 1.3s ease forwards, doom-shake .55s ease 1.08s forwards;
+}
+.doom-overlay.closing { animation: cel-overlay-out .4s ease forwards; }
+.doom-red-layer {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at center, rgba(200,0,0,.35) 0%, transparent 70%);
+  opacity: 0; will-change: opacity; animation: doom-red-glow 1.3s ease forwards;
+}
+.doom-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.doom-content {
+  position: relative; z-index: 2; text-align: center;
+  padding: 24px; display: flex; flex-direction: column; align-items: center;
+}
+.doom-eyebrow {
+  font-size: 8px; letter-spacing: .3em; color: var(--text-mid);
+  margin-bottom: 26px; opacity: 0; will-change: opacity;
+  animation: doom-eyebrow-in .5s ease 1.3s forwards;
+}
+.doom-title-wrap {
+  position: relative; display: inline-block; opacity: 0;
+  will-change: opacity, transform; animation: doom-title-in .5s ease 1.2s forwards;
+}
+.doom-title {
+  font-size: clamp(24px, 5.5vw, 50px); font-weight: 700;
+  letter-spacing: .09em; color: var(--red); line-height: 1.1;
+  animation: doom-glitch .65s linear 1.75s both;
+}
+.doom-x-svg {
+  position: absolute; inset: -8px -6px;
+  width: calc(100% + 12px); height: calc(100% + 16px);
+  pointer-events: none; overflow: visible;
+}
+.doom-x-svg line {
+  stroke: var(--red); stroke-width: 4; stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--red)) drop-shadow(0 0 14px rgba(217,64,64,.5));
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+}
+.doom-x-svg .xl1 { animation: draw-x-line .4s ease 2.1s forwards; }
+.doom-x-svg .xl2 { animation: draw-x-line .35s ease 2.55s forwards; }
+.doom-destroyed {
+  font-size: clamp(44px, 10vw, 86px); font-weight: 700; letter-spacing: .1em;
+  color: #ffd700; text-shadow: 0 0 60px rgba(255,215,0,.55), 0 0 20px rgba(255,215,0,.3);
+  margin-top: 18px; opacity: 0; will-change: opacity, transform;
+  animation: destroyed-slam .55s cubic-bezier(.15,0,.1,1) 2.65s forwards;
+}
+.doom-sub {
+  font-size: 9px; letter-spacing: .18em; color: var(--text-mid);
+  margin-top: 20px; opacity: 0; animation: fadein .4s ease 3.25s forwards;
+}
+.doom-dismiss {
+  font-size: 7px; letter-spacing: .14em; color: var(--border2);
+  margin-top: 32px; opacity: 0;
+  animation: fadein .3s ease 3.75s forwards, blink 2s step-end 4.05s infinite;
+}
+.doom-confetti {
+  position: absolute; top: -20px; pointer-events: none;
+  font-weight: 600; user-select: none; animation: ticker-fall linear forwards;
+}
+
 /* ── Time Remaining Today ── */
 .timerem-clock {
   font-size: 30px; font-weight: 500; letter-spacing: .07em;
@@ -1856,6 +2061,8 @@ async function toggleTask(pageId, currentDone) {
   recomputeStats();
   reRenderDashboard();
   checkCelebration();
+  checkGauntletCelebration();
+  checkPODCelebration();
 
   try {
     const res = await fetch('/api/notion-update', {
@@ -2608,6 +2815,452 @@ function showCelebration() {
   setTimeout(() => { if (document.getElementById('celebration-overlay')) dismiss(); }, 8000);
 
   document.body.appendChild(overlay);
+}
+
+// ══════════════════════════════════════════════
+//   MILESTONE CELEBRATIONS — GAUNTLET & POD
+// ══════════════════════════════════════════════
+let _audioCtx        = null;
+let _celMuted        = false;
+let _gauntletCelebShown = false;
+let _podCelebShown      = false;
+
+function _getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+function _osc(ctx, type, freq, dest) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(dest);
+  return { o, g };
+}
+function _makeCelMuteBtn() {
+  const btn = document.createElement('button');
+  btn.className = 'cel-overlay-mute';
+  btn.textContent = _celMuted ? '◉ UNMUTE' : '◎ MUTE';
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    _celMuted = !_celMuted;
+    btn.textContent = _celMuted ? '◉ UNMUTE' : '◎ MUTE';
+  });
+  return btn;
+}
+function _dismissCelOverlay(overlay) {
+  overlay.classList.add('closing');
+  if (overlay._fwCancel) overlay._fwCancel();
+  setTimeout(() => overlay.remove(), 400);
+}
+
+// ── SOUND: Glitch Meltdown ──
+function _playGlitchSound() {
+  if (_celMuted) return;
+  try {
+    const ctx = _getAudioCtx(); const now = ctx.currentTime;
+    [0.0,0.12,0.28,0.40,0.52,0.62,0.72,0.82].forEach((t, i) => {
+      const bLen = Math.floor(ctx.sampleRate * 0.08);
+      const bb = ctx.createBuffer(1, bLen, ctx.sampleRate);
+      const bd = bb.getChannelData(0);
+      for (let j = 0; j < bLen; j++) bd[j] = Math.random() * 2 - 1;
+      const bs = ctx.createBufferSource(), bf = ctx.createBiquadFilter(), bg = ctx.createGain();
+      bs.buffer = bb; bs.connect(bf); bf.connect(bg); bg.connect(ctx.destination);
+      bf.type = 'bandpass'; bf.frequency.value = 800 + Math.random() * 3000; bf.Q.value = 2;
+      bg.gain.setValueAtTime(0.12 + i * 0.02, now + 0.4 + t);
+      bg.gain.exponentialRampToValueAtTime(0.001, now + 0.4 + t + 0.07);
+      bs.start(now + 0.4 + t); bs.stop(now + 0.4 + t + 0.08);
+    });
+    const { o: pd, g: pdg } = _osc(ctx, 'sawtooth', 440, ctx.destination);
+    const pf = ctx.createBiquadFilter();
+    pd.disconnect(); pd.connect(pf); pf.connect(pdg); pdg.connect(ctx.destination);
+    pf.type = 'lowpass'; pf.frequency.value = 600;
+    pd.frequency.setValueAtTime(440, now + 1.4);
+    pd.frequency.exponentialRampToValueAtTime(55, now + 1.95);
+    pdg.gain.setValueAtTime(0.12, now + 1.4); pdg.gain.linearRampToValueAtTime(0, now + 2.0);
+    pd.start(now + 1.4); pd.stop(now + 2.0);
+    const { o: pu, g: pug } = _osc(ctx, 'triangle', 80, ctx.destination);
+    pu.frequency.setValueAtTime(80, now + 2.7); pu.frequency.exponentialRampToValueAtTime(660, now + 3.3);
+    pug.gain.setValueAtTime(0, now + 2.7); pug.gain.linearRampToValueAtTime(0.15, now + 2.75);
+    pug.gain.linearRampToValueAtTime(0, now + 3.3); pu.start(now + 2.7); pu.stop(now + 3.35);
+    [[523.25,0.22],[659.25,0.2],[783.99,0.2],[1046.5,0.24]].forEach(([freq,vol],i) => {
+      const { o, g } = _osc(ctx, 'triangle', freq, ctx.destination);
+      const t = now + 3.5 + i * 0.1;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.4); o.start(t); o.stop(t+0.42);
+    });
+  } catch(e) {}
+}
+
+// ── SOUND: Packet of Doom ──
+function _playDoomSound() {
+  if (_celMuted) return;
+  try {
+    const ctx = _getAudioCtx(); const now = ctx.currentTime;
+    const drone = ctx.createOscillator();
+    const dF = ctx.createBiquadFilter(), dG = ctx.createGain();
+    drone.connect(dF); dF.connect(dG); dG.connect(ctx.destination);
+    drone.type = 'sawtooth'; dF.type = 'lowpass';
+    dF.frequency.setValueAtTime(80, now); dF.frequency.linearRampToValueAtTime(320, now + 1.0);
+    drone.frequency.setValueAtTime(34, now); drone.frequency.linearRampToValueAtTime(52, now + 0.95);
+    dG.gain.setValueAtTime(0,now); dG.gain.linearRampToValueAtTime(0.09, now+0.08);
+    dG.gain.linearRampToValueAtTime(0.13, now+0.82); dG.gain.linearRampToValueAtTime(0, now+1.05);
+    drone.start(now); drone.stop(now + 1.08);
+    [{t:0.00,a:true},{t:0.12,a:false},{t:0.36,a:true},{t:0.48,a:false},
+     {t:0.66,a:true},{t:0.78,a:false},{t:0.90,a:false}].forEach(({t,a}) => {
+      const {o, g} = _osc(ctx, 'sine', a ? 40 : 58, ctx.destination);
+      const vol = a ? 0.40 : 0.20;
+      o.frequency.setValueAtTime(a?40:58, now+t); o.frequency.exponentialRampToValueAtTime((a?40:58)*0.45, now+t+0.20);
+      g.gain.setValueAtTime(0,now+t); g.gain.linearRampToValueAtTime(vol,now+t+0.012);
+      g.gain.exponentialRampToValueAtTime(0.001,now+t+0.24); o.start(now+t); o.stop(now+t+0.26);
+    });
+    const {o: boom, g: boomG} = _osc(ctx, 'sine', 95, ctx.destination);
+    boom.frequency.setValueAtTime(95, now+1.10); boom.frequency.exponentialRampToValueAtTime(22, now+2.4);
+    boomG.gain.setValueAtTime(0,now+1.10); boomG.gain.linearRampToValueAtTime(0.92,now+1.12);
+    boomG.gain.exponentialRampToValueAtTime(0.001,now+2.6); boom.start(now+1.10); boom.stop(now+2.6);
+    const nL = Math.floor(ctx.sampleRate*0.2), nB = ctx.createBuffer(1,nL,ctx.sampleRate);
+    const nd = nB.getChannelData(0); for (let i=0;i<nL;i++) nd[i]=Math.random()*2-1;
+    const ns=ctx.createBufferSource(), nf=ctx.createBiquadFilter(), ng=ctx.createGain();
+    ns.buffer=nB; ns.connect(nf); nf.connect(ng); ng.connect(ctx.destination);
+    nf.type='lowpass'; nf.frequency.value=550;
+    ng.gain.setValueAtTime(0.48,now+1.10); ng.gain.exponentialRampToValueAtTime(0.001,now+1.45);
+    ns.start(now+1.10); ns.stop(now+1.45);
+    [[261.63,1.28,.55,.18],[329.63,1.41,.55,.18],[392.00,1.54,.55,.18],
+     [523.25,1.67,1.0,.22],[659.25,1.80,1.0,.22],
+     [783.99,1.93,1.4,.20],[1046.5,2.06,1.9,.26]].forEach(([freq,t,dur,vol]) => {
+      const {o, g} = _osc(ctx, 'triangle', freq, ctx.destination);
+      const st = now+t;
+      g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(vol,st+0.05);
+      g.gain.setValueAtTime(vol,st+dur-0.14); g.gain.linearRampToValueAtTime(0,st+dur);
+      o.start(st); o.stop(st+dur);
+    });
+  } catch(e) {}
+}
+
+// ── Check functions ──
+function checkGauntletCelebration() {
+  if (!_data) return;
+  const { gauntletDone, gauntletTotal } = _data.stats;
+  if (gauntletTotal > 0 && gauntletDone >= gauntletTotal && !_gauntletCelebShown) {
+    _gauntletCelebShown = true;
+    showGauntletCelebration();
+  } else if (gauntletDone < gauntletTotal) {
+    _gauntletCelebShown = false;
+  }
+}
+
+function checkPODCelebration() {
+  if (!_data) return;
+  const { podDone, podTotal } = _data.stats;
+  if (podTotal > 0 && podDone >= podTotal && !_podCelebShown) {
+    _podCelebShown = true;
+    showPODCelebration();
+  } else if (podDone < podTotal) {
+    _podCelebShown = false;
+  }
+}
+
+// ── Gauntlet: Glitch Meltdown ──
+function showGauntletCelebration() {
+  document.querySelectorAll('.cel-overlay').forEach(el => el.remove());
+  _playGlitchSound();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'cel-overlay glitch-overlay';
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'gl-canvas';
+  overlay.appendChild(canvas);
+
+  const initWrap = document.createElement('div');
+  initWrap.className = 'gl-initial-wrap';
+  const initText = document.createElement('div');
+  initText.className = 'gl-initial-text';
+  initText.innerHTML = 'ALL 40 FRQs<br>FILED';
+  initWrap.appendChild(initText);
+
+  const xSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  xSvg.setAttribute('class', 'gl-x-svg');
+  xSvg.setAttribute('viewBox', '0 0 100 100');
+  xSvg.setAttribute('preserveAspectRatio', 'none');
+  ['xl1 2 2 98 98', 'xl2 98 2 2 98'].forEach(d => {
+    const [cls, x1, y1, x2, y2] = d.split(' ');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('pathLength', '1');
+    line.setAttribute('class', cls);
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    xSvg.appendChild(line);
+  });
+  initWrap.appendChild(xSvg);
+  overlay.appendChild(initWrap);
+
+  const rebootWrap = document.createElement('div');
+  rebootWrap.className = 'gl-reboot-wrap';
+  const rebootLabel = document.createElement('div');
+  rebootLabel.className = 'gl-reboot-label';
+  rebootLabel.textContent = 'REBOOTING SYSTEM...';
+  const progTrack = document.createElement('div');
+  progTrack.className = 'gl-progress-track';
+  const progBar = document.createElement('div');
+  progBar.className = 'gl-progress-bar';
+  progTrack.appendChild(progBar);
+  const revealTitle = document.createElement('div');
+  revealTitle.className = 'gl-reveal-title';
+  const glSub = document.createElement('div');
+  glSub.className = 'gl-sub';
+  glSub.textContent = 'ALL 40 FRQs FILED · ZERO OPEN POSITIONS';
+  const glDismiss = document.createElement('div');
+  glDismiss.className = 'gl-dismiss';
+  glDismiss.textContent = '[ CLICK ANYWHERE TO DISMISS ]';
+  rebootWrap.appendChild(rebootLabel);
+  rebootWrap.appendChild(progTrack);
+  rebootWrap.appendChild(revealTitle);
+  rebootWrap.appendChild(glSub);
+  rebootWrap.appendChild(glDismiss);
+  overlay.appendChild(rebootWrap);
+  overlay.appendChild(_makeCelMuteBtn());
+
+  overlay.addEventListener('click', () => _dismissCelOverlay(overlay));
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    canvas.width  = overlay.offsetWidth;
+    canvas.height = overlay.offsetHeight;
+  });
+
+  setTimeout(() => {
+    if (!overlay.parentNode) return;
+    overlay.style.animation = 'glitch-flicker .9s linear forwards';
+    initText.classList.add('glitching');
+    canvas.classList.add('active');
+    _startGlitchBars(canvas);
+  }, 1200);
+
+  setTimeout(() => {
+    if (!overlay.parentNode) return;
+    overlay.style.animation = 'none';
+    overlay.style.background = 'rgba(2,2,2,.99)';
+    canvas.classList.remove('active');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    initWrap.style.opacity = '0';
+  }, 2200);
+
+  setTimeout(() => {
+    if (!overlay.parentNode) return;
+    rebootWrap.style.opacity = '1';
+    rebootWrap.style.pointerEvents = 'none';
+    const FILL_DURATION = 1800;
+    const startTime = performance.now();
+    function animateBar(now) {
+      if (!overlay.parentNode) return;
+      const t = Math.min((now - startTime) / FILL_DURATION, 1);
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      progBar.style.width = (eased * 100) + '%';
+      if (t < 1) {
+        requestAnimationFrame(animateBar);
+      } else {
+        setTimeout(startTypewriterPhase, 250);
+      }
+    }
+    requestAnimationFrame(animateBar);
+  }, 2500);
+
+  function startTypewriterPhase() {
+    if (!overlay.parentNode) return;
+    rebootLabel.style.opacity = '0';
+    progTrack.style.opacity   = '0';
+    overlay.style.background  = 'rgba(9,11,9,.97)';
+    revealTitle.style.display = 'block';
+    revealTitle.style.opacity = '1';
+    revealTitle.style.animation = 'reveal-type-glow .6s ease forwards';
+    const text = 'GAUNTLET CLEARED';
+    let i = 0;
+    const tick = setInterval(() => {
+      if (!overlay.parentNode) { clearInterval(tick); return; }
+      revealTitle.textContent = text.slice(0, ++i) + (i < text.length ? '█' : '');
+      if (i >= text.length) {
+        clearInterval(tick);
+        setTimeout(() => {
+          glSub.style.opacity     = '1';
+          glSub.style.animation   = 'fadein .4s ease forwards';
+          glDismiss.style.opacity = '1';
+          glDismiss.style.animation = 'fadein .3s ease forwards, blink 2s step-end .3s infinite';
+          _spawnGlitchConfetti(overlay);
+        }, 300);
+      }
+    }, 52);
+  }
+}
+
+function _startGlitchBars(canvas) {
+  const ctx = canvas.getContext('2d');
+  const colors = ['#ff0040','#00eeff','#4bad6c','#ffffff','#ff8c00'];
+  let running = true;
+  function frame() {
+    if (!running || !canvas.parentNode) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const n = 3 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < n; i++) {
+      const y = Math.random() * canvas.height;
+      const h = 1 + Math.random() * 18;
+      ctx.globalAlpha = 0.2 + Math.random() * 0.5;
+      ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+      ctx.fillRect(0, y, canvas.width, h);
+    }
+    ctx.globalAlpha = 1;
+    setTimeout(() => requestAnimationFrame(frame), 40 + Math.random() * 60);
+  }
+  requestAnimationFrame(frame);
+  setTimeout(() => { running = false; }, 950);
+}
+
+function _spawnGlitchConfetti(overlay) {
+  const syms = ['◆','▲','✦','◉','●','▸','◈'];
+  const cols = ['var(--green)','var(--green-hi)','#ffd700','var(--text-mid)'];
+  function spawnBatch(count) {
+    if (!overlay.parentNode) return;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'gl-confetti';
+      p.textContent = syms[Math.floor(Math.random() * syms.length)];
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.color = cols[Math.floor(Math.random() * cols.length)];
+      const dur = 2.5 + Math.random() * 3;
+      p.style.fontSize = (8 + Math.random() * 13) + 'px';
+      p.style.animationDuration = dur + 's';
+      p.style.animationDelay = (Math.random() * 0.4) + 's';
+      overlay.appendChild(p);
+      setTimeout(() => p.remove(), (dur + 0.5) * 1000);
+    }
+  }
+  spawnBatch(40);
+  const iv = setInterval(() => {
+    if (!overlay.parentNode) { clearInterval(iv); return; }
+    spawnBatch(3 + Math.floor(Math.random() * 3));
+  }, 600);
+}
+
+// ── Packet of Doom: Destroyed ──
+function showPODCelebration() {
+  document.querySelectorAll('.cel-overlay').forEach(el => el.remove());
+  _playDoomSound();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'cel-overlay doom-overlay';
+
+  const redLayer = document.createElement('div');
+  redLayer.className = 'doom-red-layer';
+  overlay.appendChild(redLayer);
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'doom-canvas';
+  overlay.appendChild(canvas);
+
+  const content = document.createElement('div');
+  content.className = 'doom-content';
+  content.innerHTML = `
+    <div class="doom-eyebrow">◉ CRITICAL MILESTONE — ALL PAGES CLEARED</div>
+    <div class="doom-title-wrap">
+      <div class="doom-title">THE PACKET OF DOOM</div>
+      <svg class="doom-x-svg" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <line pathLength="1" class="xl1" x1="2" y1="2" x2="98" y2="98"/>
+        <line pathLength="1" class="xl2" x1="98" y1="2" x2="2" y2="98"/>
+      </svg>
+    </div>
+    <div class="doom-destroyed">DESTROYED</div>
+    <div class="doom-sub">100% COMPLETE · APUSH TRADING FLOOR · ALL POSITIONS CLOSED</div>
+    <div class="doom-dismiss">[ CLICK ANYWHERE TO DISMISS ]</div>
+  `;
+  overlay.appendChild(content);
+  overlay.appendChild(_makeCelMuteBtn());
+
+  overlay.addEventListener('click', () => _dismissCelOverlay(overlay));
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    canvas.width  = overlay.offsetWidth;
+    canvas.height = overlay.offsetHeight;
+    overlay._fwCancel = _startFireworks(canvas, overlay);
+  });
+
+  setTimeout(() => { if (overlay.parentNode) _spawnDoomConfetti(overlay); }, 2850);
+}
+
+function _spawnDoomConfetti(overlay) {
+  const syms = ['★','✦','◆','▲','●','◉','✸','◈','$','※','▸'];
+  const cols = ['#ffd700','#ff4444','#4bad6c','#ffffff','#ff8c00','#63c784','#e07b30'];
+  for (let i = 0; i < 120; i++) {
+    setTimeout(() => {
+      if (!overlay.parentNode) return;
+      const p = document.createElement('span');
+      p.className = 'doom-confetti';
+      p.textContent = syms[Math.floor(Math.random() * syms.length)];
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.color = cols[Math.floor(Math.random() * cols.length)];
+      p.style.fontSize = (10 + Math.random() * 18) + 'px';
+      p.style.animationDuration = (2.5 + Math.random() * 4.5) + 's';
+      overlay.appendChild(p);
+    }, i * 32);
+  }
+}
+
+function _startFireworks(canvas, overlay) {
+  const ctx = canvas.getContext('2d');
+  const rockets = [], particles = [];
+  let rafId, cancelled = false;
+  const FW_COLORS = ['#ffd700','#ff4444','#4bad6c','#ffffff','#ff8c00','#63c784','#e07b30','#ff6eb4','#00eeff'];
+
+  function launch() {
+    if (cancelled) return;
+    rockets.push({
+      x: canvas.width * (.08 + Math.random() * .84), y: canvas.height,
+      vx: (Math.random() - .5) * 2, vy: -(9 + Math.random() * 8),
+      targetY: canvas.height * (.06 + Math.random() * .44),
+      color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], trail: []
+    });
+  }
+  function explode(r) {
+    const n = 95 + Math.floor(Math.random() * 65);
+    for (let i = 0; i < n; i++) {
+      const a = (i/n)*Math.PI*2, s = 1.2 + Math.random()*5;
+      particles.push({ x:r.x, y:r.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+        color:r.color, life:1, decay:.010+Math.random()*.013, size:1.4+Math.random()*3, trail:[] });
+    }
+  }
+  [650,900,1150,1450,1850,2350,2950,3650,4450,5350].forEach(t =>
+    setTimeout(() => { if (!cancelled) launch(); }, t));
+  const iv = setInterval(() => { if (cancelled) { clearInterval(iv); return; } launch(); }, 520);
+
+  function frame() {
+    if (cancelled) return;
+    ctx.fillStyle = 'rgba(9,11,9,.16)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for (let i = rockets.length-1; i >= 0; i--) {
+      const r = rockets[i];
+      r.trail.push({x:r.x,y:r.y}); if (r.trail.length>10) r.trail.shift();
+      r.trail.forEach((pt,j) => {
+        ctx.globalAlpha=(j/r.trail.length)*.6; ctx.beginPath();
+        ctx.arc(pt.x,pt.y,1.8,0,Math.PI*2); ctx.fillStyle=r.color; ctx.fill();
+      });
+      ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(r.x,r.y,2.5,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+      r.x+=r.vx; r.y+=r.vy; r.vy*=.984;
+      if (r.y<=r.targetY) { explode(r); rockets.splice(i,1); }
+    }
+    for (let i = particles.length-1; i >= 0; i--) {
+      const p = particles[i];
+      p.trail.push({x:p.x,y:p.y}); if (p.trail.length>7) p.trail.shift();
+      p.trail.forEach((pt,j) => {
+        ctx.globalAlpha=(j/p.trail.length)*p.life*.38; ctx.beginPath();
+        ctx.arc(pt.x,pt.y,p.size*.5,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill();
+      });
+      ctx.globalAlpha=p.life; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=p.color; ctx.fill(); ctx.globalAlpha=1;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=.07; p.vx*=.992; p.vy*=.992; p.life-=p.decay;
+      if (p.life<=0) particles.splice(i,1);
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+  rafId = requestAnimationFrame(frame);
+  return () => { cancelled=true; clearInterval(iv); cancelAnimationFrame(rafId); };
 }
 
 // ══════════════════════════════════════════════
