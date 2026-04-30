@@ -1830,36 +1830,55 @@ function renderProgressRing() {
     'Exam / Due':     'EXAM',
   };
 
-  // Group done today-tasks by type
+  // Inner ring: today's scheduled tasks, grouped by type (done only)
   const byType = {};
   todayTasks.filter(t => t.done).forEach(t => {
     byType[t.type] = (byType[t.type] || 0) + 1;
   });
+  const todayDone = todayTasks.filter(t => t.done).length;
+  const pct       = Math.round(todayDone / total * 100);
 
-  // Pct — use completedOn so it can exceed 100%
-  const closedToday   = _data.allTasks.filter(t =>
-    t.completedOn ? t.completedOn === today : t.done && t.date === today
-  ).length;
-  const effectiveDone = Math.max(closedToday, _session.completions);
-  const pct           = Math.round(effectiveDone / total * 100);
+  // Outer ring: tasks completed today that were NOT scheduled for today (ahead-of-schedule)
+  const aheadTasks = _data.allTasks.filter(t =>
+    t.completedOn === today && t.date !== today
+  );
+  const aheadCount = Math.max(aheadTasks.length, _session.completions - todayDone);
 
-  // SVG donut — fills column width
+  // SVG dimensions — same viewBox as before to avoid layout shift
   const VW = 220, VH = 160;
-  const cx = 110, cy = 84, r = 60;
-  const circ = 2 * Math.PI * r;
+  const cx = 110, cy = 80;
+  const rInner = 52, rOuter = 66;
+  const circInner = 2 * Math.PI * rInner;
+  const circOuter = 2 * Math.PI * rOuter;
 
-  // Dark background track
-  let circles = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#101210" stroke-width="11"/>`;
+  let svg = '';
 
-  // One coloured arc per type, stacked around the ring
+  // Outer track
+  svg += `<circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="#101210" stroke-width="7"/>`;
+
+  // Outer arc — ahead-of-schedule completions (amber, dimmed)
+  if (aheadCount > 0) {
+    // Cap bonus arc at full ring; proportion based on today's total as context
+    const bonusFraction = Math.min(aheadCount / total, 1);
+    const bonusLen      = bonusFraction * circOuter;
+    svg += `<circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none"
+      stroke="#e07b30" stroke-width="7" stroke-linecap="round" opacity="0.55"
+      stroke-dasharray="${bonusLen.toFixed(2)} ${(circOuter - bonusLen).toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})"/>`;
+  }
+
+  // Inner track
+  svg += `<circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="#101210" stroke-width="11"/>`;
+
+  // Inner arc segments — one per type
   const segments = Object.entries(byType).filter(([, n]) => n > 0);
-  let cumAngle = -90; // start at 12 o'clock
+  let cumAngle = -90;
   segments.forEach(([type, count]) => {
     const angle  = (count / total) * 360;
-    const length = (count / total) * circ;
-    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+    const length = (count / total) * circInner;
+    svg += `<circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
       stroke="${TYPE_COLORS[type] || '#2e5030'}" stroke-width="11"
-      stroke-dasharray="${length.toFixed(2)} ${(circ - length).toFixed(2)}"
+      stroke-dasharray="${length.toFixed(2)} ${(circInner - length).toFixed(2)}"
       transform="rotate(${cumAngle} ${cx} ${cy})"/>`;
     cumAngle += angle;
   });
@@ -1867,21 +1886,27 @@ function renderProgressRing() {
   // Center text
   const fs = pct >= 200 ? '18' : pct >= 100 ? '22' : '26';
   const centerColor = pct >= 100 ? '#4bad6c' : pct >= 50 ? '#e07b30' : '#d94040';
-  circles += `
+  svg += `
     <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="${fs}" font-weight="600"
       fill="${centerColor}" font-family="JetBrains Mono,monospace">${pct}%</text>
     <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="9"
-      fill="#2e5030" font-family="JetBrains Mono,monospace">${effectiveDone} / ${total} TODAY</text>`;
+      fill="#2e5030" font-family="JetBrains Mono,monospace">${todayDone} / ${total} TODAY</text>`;
 
-  // Legend — two per row, positioned below ring in SVG
+  // Legend — today's task types
   const legendItems = segments.map(([type, count]) =>
     `<span style="color:${TYPE_COLORS[type] || '#2e5030'};font-size:7.5px;letter-spacing:.08em;white-space:nowrap">◆ ${TYPE_LABELS[type] || type} ${count}</span>`
   ).join('<span style="color:#182018;padding:0 6px">·</span>');
 
+  // Ahead-of-schedule label (only shown when relevant)
+  const aheadLabel = aheadCount > 0
+    ? `<div style="text-align:center;margin-top:3px"><span style="color:#e07b30;font-size:7.5px;letter-spacing:.08em;opacity:0.65">◆ +${aheadCount} AHEAD OF SCHEDULE</span></div>`
+    : '';
+
   el.innerHTML = `
     <svg width="100%" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg"
-      style="display:block">${circles}</svg>
+      style="display:block">${svg}</svg>
     ${legendItems ? `<div style="text-align:center;margin-top:2px;line-height:2;padding:0 6px">${legendItems}</div>` : ''}
+    ${aheadLabel}
   `;
 }
 
