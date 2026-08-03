@@ -46,8 +46,8 @@ export default async function handler(req, res) {
     } while (cursor);
 
     // ── Parse tasks ────────────────────────────────────────────────────────
-    // Schema: Task (title), Subject (select), Priority (select), Done (checkbox),
-    // Date (date), Completed On (date), Est. Time (text), Tag (text)
+    // Schema: Task (title), Subject (select), Priority (select), Book (select),
+    // Done (checkbox), Date (date), Completed On (date), Est. Time (text), Tag (text)
     const tasks = allResults.map((page) => {
       const p = page.properties;
       return {
@@ -55,6 +55,7 @@ export default async function handler(req, res) {
         task:     p.Task?.title?.[0]?.plain_text ?? '(untitled)',
         subject:  p.Subject?.select?.name ?? 'Other',
         priority: p.Priority?.select?.name ?? '',
+        book:     p.Book?.select?.name ?? '',
         done:        p.Done?.checkbox ?? false,
         date:        p.Date?.date?.start ?? null,
         completedOn: p['Completed On']?.date?.start ?? null,

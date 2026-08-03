@@ -1144,7 +1144,10 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 // ══════════════════════════════════════════════
 //   SUBJECT / PRIORITY HELPERS
 // ══════════════════════════════════════════════
-const SUBJECT_COLORS = { 'AP Lang': '#e07b30', 'AP Seminar': '#a855c9', 'Personal': '#4bad6c' };
+const SUBJECT_COLORS = {
+  'AP Lang': '#e07b30', 'AP Seminar': '#a855c9', 'Personal': '#4bad6c',
+  'The Anthropocene Reviewed': '#4a90d9', 'Outliers': '#c9a855', 'Thank You For Arguing': '#c95580',
+};
 const FALLBACK_PALETTE = ['#4a90d9', '#c9a855', '#55c9c0', '#c95580', '#4bad6c', '#e07b30', '#d94040'];
 function subjectColor(subject) {
   if (SUBJECT_COLORS[subject]) return SUBJECT_COLORS[subject];
@@ -1152,7 +1155,10 @@ function subjectColor(subject) {
   for (let i = 0; i < subject.length; i++) hash = (hash * 31 + subject.charCodeAt(i)) >>> 0;
   return FALLBACK_PALETTE[hash % FALLBACK_PALETTE.length];
 }
-const SUBJECT_SHORT = { 'AP Lang': 'LANG', 'AP Seminar': 'SEM', 'Personal': 'PERS' };
+const SUBJECT_SHORT = {
+  'AP Lang': 'LANG', 'AP Seminar': 'SEM', 'Personal': 'PERS',
+  'The Anthropocene Reviewed': 'ANTH', 'Outliers': 'OUT', 'Thank You For Arguing': 'TYA',
+};
 function subjectShort(subject) {
   if (SUBJECT_SHORT[subject]) return SUBJECT_SHORT[subject];
   const s = (subject || 'GEN').replace(/[^A-Za-z0-9]/g, '').slice(0, 5).toUpperCase();
@@ -1206,6 +1212,18 @@ function computeStats(allTasks, todayEastern) {
     .map(s => ({ ...s, pct: s.total ? Math.round(s.done / s.total * 100) : 0, hex: subjectColor(s.name) }))
     .sort((a, b) => b.total - a.total);
 
+  // ── P&L groups: same as subjects, but AP Lang is split by Book ──
+  const byPnlGroup = {};
+  allTasks.forEach(t => {
+    const g = t.book || t.subject || 'Other';
+    if (!byPnlGroup[g]) byPnlGroup[g] = { name: g, done: 0, total: 0 };
+    byPnlGroup[g].total++;
+    if (t.done) byPnlGroup[g].done++;
+  });
+  const pnlGroups = Object.values(byPnlGroup)
+    .map(s => ({ ...s, pct: s.total ? Math.round(s.done / s.total * 100) : 0, hex: subjectColor(s.name) }))
+    .sort((a, b) => b.total - a.total);
+
   // ── per-priority breakdown ──
   const byPriority = { High: { done: 0, total: 0 }, Medium: { done: 0, total: 0 }, Low: { done: 0, total: 0 } };
   allTasks.forEach(t => {
@@ -1250,7 +1268,7 @@ function computeStats(allTasks, todayEastern) {
 
   return {
     todayEastern,
-    subjects, byPriority,
+    subjects, pnlGroups, byPriority,
     totalDone, totalTasks,
     totalPct: totalTasks ? Math.round(totalDone / totalTasks * 100) : 0,
     todayDone, todayTotal,
@@ -1372,12 +1390,12 @@ function renderStatus(stats) {
 }
 
 // ══════════════════════════════════════════════
-//   RENDER P&L  (per subject)
+//   RENDER P&L  (per book for AP Lang, per subject otherwise)
 // ══════════════════════════════════════════════
 function renderPnL(stats) {
-  const { subjects, totalDone, totalTasks, totalPct } = stats;
-  if (!subjects.length) return `<div class="skel">No tasks yet — add some in Notion.</div>`;
-  let h = subjects.map(s => {
+  const { pnlGroups, totalDone, totalTasks, totalPct } = stats;
+  if (!pnlGroups.length) return `<div class="skel">No tasks yet — add some in Notion.</div>`;
+  let h = pnlGroups.map(s => {
     const c = s.pct >= 80 ? 'g' : s.pct >= 40 ? 'w' : 'r';
     return `
       <div class="pnl-item">
@@ -1661,8 +1679,14 @@ function renderBurnDown() {
   const today      = _data.todayEastern;
 
   const dates = tasks.map(t => t.date).sort();
-  const startStr = dates[0];
-  const endStr   = dates[dates.length - 1];
+  const endStr = dates[dates.length - 1];
+  // Start the burn-down at the earliest date among still-pending tasks (clamped to
+  // today), not the earliest date of ANY task — otherwise a completed task's old
+  // due date (e.g. one finished weeks ago) drags the whole timeline backward and
+  // makes a freshly-rescheduled plan look artificially behind.
+  const pendingDates = tasks.filter(t => !t.done).map(t => t.date).sort();
+  const earliestPending = pendingDates.length ? pendingDates[0] : dates[0];
+  const startStr = [earliestPending, today].sort()[0];
 
   const startDate  = parseDate(startStr);
   const endDate    = parseDate(endStr);
