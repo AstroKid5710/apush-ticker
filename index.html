@@ -918,6 +918,125 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
 }
 .cal-task-row:last-child { border-bottom: none; }
 .cal-task-row .pos-check { flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════
+   CAPTURE VIEW  — big, high-contrast day sheet built to be
+   photographed off-screen with a phone and parsed by the
+   task app's AI. Everything here is prefixed .cap-
+══════════════════════════════════════════════════════════ */
+.cap-overlay {
+  position: fixed; inset: 0; z-index: 210;
+  background: #000;
+  display: none; flex-direction: column;
+  --cap-scale: 1;
+}
+.cap-overlay.open { display: flex; animation: cel-in .2s ease; }
+
+/* ── control bar — fades out when idle so it stays out of the photo ── */
+.cap-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  transition: opacity .5s ease;
+}
+.cap-overlay.idle .cap-bar { opacity: .06; }
+.cap-bar:hover { opacity: 1 !important; }
+.cap-brand {
+  font-size: 8px; letter-spacing: .2em; color: var(--green);
+  margin-right: 6px;
+}
+.cap-bar-spacer { margin-left: auto; }
+.cap-date-input {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg2); color: var(--green);
+  border: 1px solid var(--border2); padding: 2px 6px;
+  color-scheme: dark; cursor: pointer;
+}
+.cap-hint {
+  font-size: 7px; letter-spacing: .12em; color: var(--text-dim);
+  margin-left: 6px;
+}
+
+/* ── the sheet itself ── */
+.cap-sheet {
+  flex: 1; overflow-y: auto; min-height: 0;
+  padding: calc(28px * var(--cap-scale)) calc(40px * var(--cap-scale));
+}
+.cap-sheet::-webkit-scrollbar { width: 3px; }
+.cap-sheet::-webkit-scrollbar-track { background: transparent; }
+.cap-sheet::-webkit-scrollbar-thumb { background: var(--border2); }
+.cap-inner { max-width: 1100px; margin: 0 auto; }
+
+.cap-head { border-bottom: 2px solid var(--green-mid); padding-bottom: calc(12px * var(--cap-scale)); margin-bottom: calc(22px * var(--cap-scale)); }
+.cap-title {
+  font-size: calc(11px * var(--cap-scale)); letter-spacing: .3em;
+  color: var(--green); font-weight: 600; margin-bottom: calc(6px * var(--cap-scale));
+}
+.cap-date {
+  font-size: calc(26px * var(--cap-scale)); font-weight: 700;
+  color: #eafbee; letter-spacing: .02em; line-height: 1.15;
+}
+.cap-meta {
+  font-size: calc(11px * var(--cap-scale)); letter-spacing: .12em;
+  color: var(--green-hi); margin-top: calc(8px * var(--cap-scale));
+}
+
+.cap-section-head {
+  font-size: calc(11px * var(--cap-scale)); letter-spacing: .22em;
+  color: var(--amber); font-weight: 600;
+  margin: calc(28px * var(--cap-scale)) 0 calc(12px * var(--cap-scale));
+  padding-bottom: calc(5px * var(--cap-scale));
+  border-bottom: 1px solid var(--amber-dim);
+}
+
+.cap-list { list-style: none; }
+.cap-item {
+  display: flex; gap: calc(16px * var(--cap-scale));
+  padding: calc(13px * var(--cap-scale)) 0;
+  border-bottom: 1px solid #16201a;
+}
+.cap-item:last-child { border-bottom: none; }
+.cap-num {
+  flex-shrink: 0;
+  font-size: calc(20px * var(--cap-scale)); font-weight: 700;
+  color: var(--green); min-width: calc(38px * var(--cap-scale));
+  line-height: 1.25;
+}
+.cap-main { flex: 1; min-width: 0; }
+.cap-task {
+  font-size: calc(21px * var(--cap-scale)); font-weight: 600;
+  color: #eafbee; line-height: 1.25;
+  margin-bottom: calc(6px * var(--cap-scale));
+}
+.cap-item.is-done .cap-task { color: var(--text-mid); text-decoration: line-through; }
+.cap-fields {
+  display: flex; flex-wrap: wrap; gap: calc(6px * var(--cap-scale)) calc(20px * var(--cap-scale));
+  font-size: calc(12.5px * var(--cap-scale)); letter-spacing: .06em;
+}
+.cap-field b { color: var(--green); font-weight: 500; }
+.cap-field span { color: var(--green-hi); font-weight: 600; }
+.cap-field.hi span { color: var(--amber); }
+.cap-field.done span { color: var(--red); }
+
+.cap-empty {
+  font-size: calc(16px * var(--cap-scale)); color: var(--text-mid);
+  letter-spacing: .12em; padding: calc(30px * var(--cap-scale)) 0;
+}
+.cap-foot {
+  margin-top: calc(26px * var(--cap-scale));
+  padding-top: calc(10px * var(--cap-scale));
+  border-top: 1px solid var(--border);
+  font-size: calc(10px * var(--cap-scale)); letter-spacing: .14em;
+  color: var(--text-dim);
+}
+
+@media (max-width: 760px) {
+  .cap-sheet { padding: calc(18px * var(--cap-scale)) calc(16px * var(--cap-scale)); }
+  .cap-date { font-size: calc(20px * var(--cap-scale)); }
+  .cap-task { font-size: calc(17px * var(--cap-scale)); }
+}
 </style>
 </head>
 <body>
@@ -1048,6 +1167,7 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
         <div class="filter-sep"></div>
         <button class="filter-btn" id="show-done-btn" data-show-done="false">HIDE DONE</button>
         <button class="filter-btn" onclick="openCalendarModal()">📅 CALENDAR</button>
+        <button class="filter-btn" onclick="openCaptureView()">📷 CAPTURE</button>
       </div>
       <div class="table-scroll">
         <table>
@@ -1138,6 +1258,24 @@ tr.done-row .td-name { text-decoration: line-through; text-decoration-color: var
       <div class="skel">loading…</div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════ CAPTURE VIEW ══════════════ -->
+<div class="cap-overlay" id="cap-overlay">
+  <div class="cap-bar" id="cap-bar">
+    <span class="cap-brand">📷 CAPTURE</span>
+    <button class="cal-nav-btn" onclick="capNavDay(-1)">‹ PREV</button>
+    <button class="cal-nav-btn" onclick="capGoToday()">TODAY</button>
+    <button class="cal-nav-btn" onclick="capNavDay(1)">NEXT ›</button>
+    <input type="date" class="cap-date-input" id="cap-date-input" onchange="capSetDate(this.value)">
+    <span class="cap-hint">CONTROLS FADE WHEN IDLE</span>
+    <span class="cap-bar-spacer"></span>
+    <button class="cal-nav-btn" id="cap-size-btn" onclick="capCycleSize()">SIZE · M</button>
+    <button class="cal-nav-btn" id="cap-overdue-btn" onclick="capToggleOverdue()">OVERDUE · ON</button>
+    <button class="cal-nav-btn" id="cap-done-btn" onclick="capToggleDone()">DONE · HIDDEN</button>
+    <button class="cal-close" onclick="closeCaptureView()">✕ CLOSE</button>
+  </div>
+  <div class="cap-sheet" id="cap-sheet"></div>
 </div>
 
 <script>
@@ -1386,6 +1524,7 @@ function renderStatus(stats) {
     ${streakHtml}
     <button class="sb-practice" onclick="openPracticeModal()">◉ FOCUS SESSION</button>
     <button class="sb-cal" onclick="openCalendarModal()">📅 CALENDAR</button>
+    <button class="sb-cal" onclick="openCaptureView()">📷 CAPTURE</button>
   `;
 }
 
@@ -2636,6 +2775,168 @@ function renderCalendar() {
   `;
 }
 
+
+// ══════════════════════════════════════════════
+//   CAPTURE VIEW
+//   A big, high-contrast sheet for a single day, laid out so a
+//   phone photo of the screen parses cleanly in the task app.
+// ══════════════════════════════════════════════
+let _capDate       = null;
+let _capSizeIdx    = 1;                       // 0=S 1=M 2=L
+let _capShowDone   = false;
+let _capOverdue    = true;
+let _capIdleTimer  = null;
+const CAP_SIZES    = [{ k: 'S', v: 0.8 }, { k: 'M', v: 1 }, { k: 'L', v: 1.3 }];
+const CAP_DOW      = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+const CAP_MONTHS   = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY',
+                      'AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+function capLongDate(dateStr) {
+  const d = parseDate(dateStr);
+  return `${CAP_DOW[d.getDay()]} · ${CAP_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// Pull a minute count out of free-text estimates like "45 min", "1h 30", "2 hrs"
+function capMinutes(est) {
+  if (!est) return 0;
+  const s = String(est).toLowerCase();
+  const h = s.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)/);
+  const m = s.match(/(\d+)\s*(?:m|min|mins|minute|minutes)/);
+  if (h || m) return Math.round((h ? parseFloat(h[1]) * 60 : 0) + (m ? parseInt(m[1], 10) : 0));
+  const bare = s.match(/^\s*(\d+)\s*$/);          // bare number => minutes
+  return bare ? parseInt(bare[1], 10) : 0;
+}
+function capFmtMinutes(total) {
+  if (!total) return null;
+  const h = Math.floor(total / 60), m = total % 60;
+  return h ? (m ? `${h}H ${m}M` : `${h}H`) : `${m}M`;
+}
+
+function openCaptureView() {
+  if (!_data) return;
+  if (!_capDate) _capDate = _data.todayEastern;
+  document.getElementById('cap-overlay').classList.add('open');
+  renderCaptureView();
+  capResetIdle();
+}
+function closeCaptureView() {
+  document.getElementById('cap-overlay').classList.remove('open');
+  clearTimeout(_capIdleTimer);
+}
+function capIsOpen() {
+  return document.getElementById('cap-overlay').classList.contains('open');
+}
+function capNavDay(dir) {
+  const d = parseDate(_capDate);
+  d.setDate(d.getDate() + dir);
+  _capDate = toDateStr(d);
+  renderCaptureView();
+}
+function capGoToday() { _capDate = _data.todayEastern; renderCaptureView(); }
+function capSetDate(v) { if (v) { _capDate = v; renderCaptureView(); } }
+function capCycleSize() {
+  _capSizeIdx = (_capSizeIdx + 1) % CAP_SIZES.length;
+  renderCaptureView();
+}
+function capToggleDone()    { _capShowDone = !_capShowDone; renderCaptureView(); }
+function capToggleOverdue() { _capOverdue  = !_capOverdue;  renderCaptureView(); }
+
+// Controls fade out after a few idle seconds so they stay out of the shot
+function capResetIdle() {
+  const ov = document.getElementById('cap-overlay');
+  ov.classList.remove('idle');
+  clearTimeout(_capIdleTimer);
+  _capIdleTimer = setTimeout(() => { if (capIsOpen()) ov.classList.add('idle'); }, 3500);
+}
+
+function capRow(t, i, offset = 0) {
+  const fields = [];
+  fields.push(`<span class="cap-field"><b>SUBJECT:</b> <span>${(t.subject || 'OTHER').toUpperCase()}</span></span>`);
+  if (t.priority) {
+    const hi = t.priority === 'High' ? ' hi' : '';
+    fields.push(`<span class="cap-field${hi}"><b>PRIORITY:</b> <span>${t.priority.toUpperCase()}</span></span>`);
+  }
+  if (t.est)  fields.push(`<span class="cap-field"><b>EST TIME:</b> <span>${t.est.toUpperCase()}</span></span>`);
+  if (t.book) fields.push(`<span class="cap-field"><b>BOOK:</b> <span>${t.book.toUpperCase()}</span></span>`);
+  if (t.tag)  fields.push(`<span class="cap-field"><b>TAG:</b> <span>${t.tag.toUpperCase()}</span></span>`);
+  if (t.date) fields.push(`<span class="cap-field"><b>DUE:</b> <span>${t.date}</span></span>`);
+  if (t.done) fields.push(`<span class="cap-field done"><b>STATUS:</b> <span>COMPLETED</span></span>`);
+
+  return `
+    <li class="cap-item${t.done ? ' is-done' : ''}">
+      <div class="cap-num">${String(i + 1 + offset).padStart(2, '0')}</div>
+      <div class="cap-main">
+        <div class="cap-task">${t.task}</div>
+        <div class="cap-fields">${fields.join('')}</div>
+      </div>
+    </li>`;
+}
+
+function renderCaptureView() {
+  if (!_data) return;
+  const today = _data.todayEastern;
+
+  document.getElementById('cap-overlay').style.setProperty('--cap-scale', CAP_SIZES[_capSizeIdx].v);
+  document.getElementById('cap-size-btn').textContent    = `SIZE · ${CAP_SIZES[_capSizeIdx].k}`;
+  document.getElementById('cap-done-btn').textContent    = `DONE · ${_capShowDone ? 'SHOWN' : 'HIDDEN'}`;
+  document.getElementById('cap-overdue-btn').textContent = `OVERDUE · ${_capOverdue ? 'ON' : 'OFF'}`;
+  document.getElementById('cap-date-input').value        = _capDate;
+
+  // Tasks scheduled for the selected day
+  let dayTasks = _data.allTasks.filter(t => t.date === _capDate);
+  if (!_capShowDone) dayTasks = dayTasks.filter(t => !t.done);
+  const rank = p => (p === 'High' ? 0 : p === 'Medium' ? 1 : p === 'Low' ? 2 : 3);
+  dayTasks.sort((a, b) => rank(a.priority) - rank(b.priority) || a.task.localeCompare(b.task));
+
+  // Anything still open from before the selected day, when the day isn't in the past
+  const overdue = (_capOverdue && _capDate >= today)
+    ? _data.allTasks
+        .filter(t => !t.done && t.date && t.date < _capDate)
+        .sort((a, b) => a.date.localeCompare(b.date))
+    : [];
+
+  const openCount = dayTasks.filter(t => !t.done).length + overdue.length;
+  const highCount = [...dayTasks, ...overdue].filter(t => !t.done && t.priority === 'High').length;
+  const totalMin  = [...dayTasks, ...overdue].filter(t => !t.done)
+                      .reduce((sum, t) => sum + capMinutes(t.est), 0);
+
+  const metaBits = [`${openCount} TASK${openCount === 1 ? '' : 'S'}`];
+  if (highCount) metaBits.push(`${highCount} HIGH PRIORITY`);
+  const estLabel = capFmtMinutes(totalMin);
+  if (estLabel) metaBits.push(`EST ${estLabel}`);
+  if (_capDate === today) metaBits.push('TODAY');
+
+  const dayBlock = dayTasks.length
+    ? `<ol class="cap-list">${dayTasks.map((t, i) => capRow(t, i)).join('')}</ol>`
+    : `<div class="cap-empty">NO TASKS SCHEDULED FOR THIS DAY</div>`;
+
+  const overdueBlock = overdue.length ? `
+    <div class="cap-section-head">CARRIED OVER · STILL OPEN FROM EARLIER</div>
+    <ol class="cap-list">${overdue.map((t, i) => capRow(t, i, dayTasks.length)).join('')}</ol>` : '';
+
+  document.getElementById('cap-sheet').innerHTML = `
+    <div class="cap-inner">
+      <div class="cap-head">
+        <div class="cap-title">DAY PLAN</div>
+        <div class="cap-date">${capLongDate(_capDate)}</div>
+        <div class="cap-meta">${metaBits.join(' · ')}</div>
+      </div>
+      ${dayBlock}
+      ${overdueBlock}
+      <div class="cap-foot">SUMMER WORK TRACKER · GENERATED ${_capDate} · ALL DATES YYYY-MM-DD</div>
+    </div>`;
+}
+
+document.addEventListener('keydown', e => {
+  if (!capIsOpen()) return;
+  if (e.key === 'Escape')     { e.preventDefault(); closeCaptureView(); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); capNavDay(-1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); capNavDay(1);  }
+});
+['mousemove', 'keydown', 'touchstart'].forEach(evt =>
+  document.addEventListener(evt, () => { if (capIsOpen()) capResetIdle(); })
+);
+
 // ══════════════════════════════════════════════
 //   FETCH + FULL RENDER
 // ══════════════════════════════════════════════
@@ -2676,6 +2977,7 @@ async function loadData() {
     renderBurnDown();
     renderSession();
     if (document.getElementById('cal-overlay').classList.contains('open')) renderCalendar();
+    if (capIsOpen()) renderCaptureView();
 
     setRefreshTime();
     flashRefreshDot();
